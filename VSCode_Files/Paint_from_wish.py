@@ -7,7 +7,7 @@ from pygame.constants import KEYDOWN, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTIO
 ## VARIABLES ##
 line_width = 2
 image_res = 128  # image is square
-image_res_factor = 5
+image_res_factor = 1
 drawing_surface_size = image_res*image_res_factor  # square width = height
 extra_space = 150
 WIN_WIDTH = drawing_surface_size + extra_space + line_width + 2
@@ -29,7 +29,7 @@ consol_height = WIN_HEIGHT - clear_display_button_y - \
     clear_display_button_height - space_between_buttons*2
 console_message_max_time = 5
 
-pixel_size = image_res_factor
+drawing_line_width = 3
 FPS = 1000
 TIME_DELAY = int(1000/FPS)
 
@@ -84,7 +84,7 @@ def drawFigure(surface, lc):
         if lc[i] != "Unterbruch" and lc[i + 1] != "Unterbruch":
             if len(lc[i]) > 1:
                 pygame.draw.line(
-                    surface, BLACK, lc[i], lc[i + 1], pixel_size)
+                    surface, BLACK, lc[i], lc[i + 1], drawing_line_width)
 
 
 def Convert(display, name, pos, size):
@@ -148,11 +148,15 @@ class Game:
                             f.close()
                             Convert(self.screen, f"Image_{images}.png",
                                     (0, 0), (drawing_surface_size, drawing_surface_size))
+                            if len(consol_messages) >= consol_height/text_size2 - 1:
+                                consol_messages = []
                             consol_messages.append(
                                 ConsolMessage(f"Converted to Image_{images}.png", time.time()))
                         if x >= clear_display_button_x and x <= clear_display_button_x + clear_display_button_side_lenght and y >= clear_display_button_y and y <= clear_display_button_y + clear_display_button_height:
                             line_coordinates = []
                             clear_display_button_pressed = True
+                            if len(consol_messages) >= consol_height/text_size2 - 1:
+                                consol_messages = []
                             consol_messages.append(
                                 ConsolMessage("Cleared screen", time.time()))
 
@@ -165,7 +169,7 @@ class Game:
                 if event.type == MOUSEMOTION:
                     if mouse_pressed:
                         (x, y) = pygame.mouse.get_pos()
-                        if x < WIN_WIDTH - extra_space - pixel_size/2 and x > 0 and y > 0 and y < WIN_HEIGHT:
+                        if x < WIN_WIDTH - extra_space - drawing_line_width/2 and x > 0 and y > 0 and y < WIN_HEIGHT:
                             line_coordinates.append((x, y))
                         else:
                             line_coordinates.append("Unterbruch")
@@ -178,8 +182,6 @@ class Game:
                 line_coordinates = []
 
             # updateConsol
-            if len(consol_messages) >= consol_height/text_size2 - 1:
-                consol_messages = []
 
             messages_in_overtime = 0
             time_now = time.time()
@@ -194,6 +196,7 @@ class Game:
             drawInterface(self.screen, font1, font2,
                           convert_button_pressed, clear_display_button_pressed, consol_messages)
             drawFigure(self.screen, line_coordinates)
+
             # Update
             pygame.time.delay(TIME_DELAY)
             pygame.display.flip()
