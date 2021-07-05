@@ -12,6 +12,8 @@ extra_space = 150
 WIN_WIDTH = drawing_surface_size + extra_space + line_width + 2
 WIN_HEIGHT = drawing_surface_size + 2
 
+consol_height = WIN_HEIGHT/2.5
+
 convert_button_side_lenght = 55
 convert_button_height = 20
 convert_button_x = WIN_WIDTH - extra_space/2 - convert_button_side_lenght/2
@@ -31,7 +33,7 @@ BG_COLOR = WHITE
 ## FUNCTIONS ##
 
 
-def drawInterface(surface, f1, f2, cbp):
+def drawInterface(surface, f1, f2, cbp, consol):
     pygame.draw.line(
         surface, BLACK, (drawing_surface_size, 0), (drawing_surface_size, WIN_HEIGHT), line_width)
 
@@ -45,6 +47,10 @@ def drawInterface(surface, f1, f2, cbp):
         convert_button_x, convert_button_y, convert_button_side_lenght, convert_button_height), line_width)
     img1 = f1.render('Convert', True, BLACK)
     img2 = f2.render('Clear Display: Backspace', True, BLACK)
+    for k in range(len(consol)):
+        msg = f2.render(consol[k], True, BLACK)
+        surface.blit(msg, (WIN_WIDTH - extra_space +
+                           1, WIN_HEIGHT - consol_height + k*text_size2))
     surface.blit(img1, (convert_button_x + 4, convert_button_y + 4))
     surface.blit(img2, (WIN_WIDTH - extra_space + 1, 5))
 
@@ -82,13 +88,14 @@ class Game:
 
     def play(self):
         line_coordinates = []
-        f = open('Convertations_int.txt', 'r')
-        convertations = int(f.read())
+        f = open('Image_int.txt', 'r')
+        images = int(f.read())
         f.close()
         mouse_pressed = False
         convert_button_pressed = False
         font1 = pygame.font.SysFont('Arial.ttf', text_size1)
         font2 = pygame.font.SysFont('Arial.ttf', text_size2)
+        consol_messages = []
         while True:
             # key events
             for event in pygame.event.get():
@@ -104,12 +111,16 @@ class Game:
                             line_coordinates.append((x, y))
                         if x >= convert_button_x and x <= convert_button_x + convert_button_side_lenght and y >= convert_button_y and y <= convert_button_y + convert_button_height:
                             convert_button_pressed = True
-                            convertations += 1
-                            f = open('Convertations_int.txt', 'w')
-                            f.write(f"{convertations}")
+                            images += 1
+                            f = open('Image_int.txt', 'w')
+                            f.write(f"{images}")
                             f.close()
-                            Convert(self.screen, f"Convertation_{convertations}.png",
+                            Convert(self.screen, f"Image_{images}.png",
                                     (0, 0), (drawing_surface_size, drawing_surface_size))
+                            if len(consol_messages) >= consol_height/text_size2 - 1:
+                                consol_messages = []
+                            consol_messages.append(
+                                f"Converted to Image_{images}.png")
 
                 if event.type == MOUSEBUTTONUP:
                     convert_button_pressed = False
@@ -132,7 +143,8 @@ class Game:
                 line_coordinates = []
 
             self.screen.fill(BG_COLOR)  # draw empty screen
-            drawInterface(self.screen, font1, font2, convert_button_pressed)
+            drawInterface(self.screen, font1, font2,
+                          convert_button_pressed, consol_messages)
             drawFigure(self.screen, line_coordinates)
             # Update
             pygame.time.delay(TIME_DELAY)
