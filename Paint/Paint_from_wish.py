@@ -81,7 +81,7 @@ def drawInterface(surface, f1, f2, cbp, cdbp, consol_m):
 
 def drawFigure(surface, lc):
     for i in range(len(lc) - 1):
-        if lc[i] != "Unterbruch" and lc[i + 1] != "Unterbruch":
+        if lc[i] != "break" and lc[i + 1] != "break":
             if len(lc[i]) > 1:
                 pygame.draw.line(
                     surface, BLACK, lc[i], lc[i + 1], drawing_line_width)
@@ -164,7 +164,7 @@ class Game:
                     clear_display_button_pressed = False
                     convert_button_pressed = False
                     mouse_pressed = False
-                    line_coordinates.append("Unterbruch")
+                    line_coordinates.append("break")
 
                 if event.type == MOUSEMOTION:
                     if mouse_pressed:
@@ -172,7 +172,7 @@ class Game:
                         if x < WIN_WIDTH - extra_space - drawing_line_width/2 and x > 0 and y > 0 and y < WIN_HEIGHT:
                             line_coordinates.append((x, y))
                         else:
-                            line_coordinates.append("Unterbruch")
+                            line_coordinates.append("break")
 
             keys = pygame.key.get_pressed()
             if keys[pygame.K_ESCAPE]:
