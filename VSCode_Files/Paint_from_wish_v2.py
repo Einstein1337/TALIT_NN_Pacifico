@@ -82,6 +82,9 @@ class Game:
 
     def play(self):
         line_coordinates = []
+        f = open('Convertations_int.txt', 'r')
+        convertations = int(f.read())
+        f.close()
         mouse_pressed = False
         convert_button_pressed = False
         font1 = pygame.font.SysFont('Arial.ttf', text_size1)
@@ -101,7 +104,11 @@ class Game:
                             line_coordinates.append((x, y))
                         if x >= convert_button_x and x <= convert_button_x + convert_button_side_lenght and y >= convert_button_y and y <= convert_button_y + convert_button_height:
                             convert_button_pressed = True
-                            Convert(self.screen, "Screenshot.png",
+                            convertations += 1
+                            f = open('Convertations_int.txt', 'w')
+                            f.write(f"{convertations}")
+                            f.close()
+                            Convert(self.screen, f"Convertation_{convertations}.png",
                                     (0, 0), (drawing_surface_size, drawing_surface_size))
 
                 if event.type == MOUSEBUTTONUP:
