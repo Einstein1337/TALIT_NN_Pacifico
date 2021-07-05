@@ -1,5 +1,6 @@
 import numpy as np
 import pygame
+from pygame import draw
 from pygame.constants import KEYDOWN, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION
 
 ## VARIABLES ##
@@ -11,8 +12,8 @@ extra_space = 150
 WIN_WIDTH = drawing_surface_size + extra_space + line_width + 2
 WIN_HEIGHT = drawing_surface_size + 2
 
-convert_button_side_lenght = 70
-convert_button_height = 50
+convert_button_side_lenght = 55
+convert_button_height = 20
 convert_button_x = WIN_WIDTH - extra_space/2 - convert_button_side_lenght/2
 convert_button_y = WIN_HEIGHT/2 - convert_button_height/2
 
@@ -20,6 +21,8 @@ pixel_size = image_res_factor
 FPS = 1000
 TIME_DELAY = int(1000/FPS)
 
+text_size1 = 20
+text_size2 = 15
 # Colors
 WHITE = (255, 255, 255)
 GRAY = (200, 200, 200)
@@ -28,11 +31,22 @@ BG_COLOR = WHITE
 ## FUNCTIONS ##
 
 
-def drawInterface(surface):
+def drawInterface(surface, f1, f2, cbp):
     pygame.draw.line(
         surface, BLACK, (drawing_surface_size, 0), (drawing_surface_size, WIN_HEIGHT), line_width)
+
+    if cbp:
+        color = GRAY
+    else:
+        color = WHITE
+    pygame.draw.rect(surface, color,  (
+        convert_button_x, convert_button_y, convert_button_side_lenght, convert_button_height))
     pygame.draw.rect(surface, BLACK,  (
         convert_button_x, convert_button_y, convert_button_side_lenght, convert_button_height), line_width)
+    img1 = f1.render('Convert', True, BLACK)
+    img2 = f2.render('Clear Display: Backspace', True, BLACK)
+    surface.blit(img1, (convert_button_x + 4, convert_button_y + 4))
+    surface.blit(img2, (WIN_WIDTH - extra_space + 1, 5))
 
 
 def drawFigure(surface, lc):
@@ -41,6 +55,13 @@ def drawFigure(surface, lc):
             if len(lc[i]) > 1:
                 pygame.draw.line(
                     surface, BLACK, lc[i], lc[i + 1], pixel_size)
+
+
+def Convert(display, name, pos, size):
+    image = pygame.Surface(size)  # Create image surface
+    # Blit portion of the display to the image
+    image.blit(display, (0, 0), (pos, size))
+    pygame.image.save(image, name)  # Save the image to the disk
 
 
 class Game:
@@ -61,9 +82,10 @@ class Game:
 
     def play(self):
         line_coordinates = []
-        draw = False
-        erase = False
         mouse_pressed = False
+        convert_button_pressed = False
+        font1 = pygame.font.SysFont('Arial.ttf', text_size1)
+        font2 = pygame.font.SysFont('Arial.ttf', text_size2)
         while True:
             # key events
             for event in pygame.event.get():
@@ -77,8 +99,13 @@ class Game:
                         (x, y) = pygame.mouse.get_pos()
                         if x < WIN_WIDTH - extra_space:
                             line_coordinates.append((x, y))
+                        if x >= convert_button_x and x <= convert_button_x + convert_button_side_lenght and y >= convert_button_y and y <= convert_button_y + convert_button_height:
+                            convert_button_pressed = True
+                            Convert(self.screen, "Screenshot.png",
+                                    (0, 0), (drawing_surface_size, drawing_surface_size))
 
                 if event.type == MOUSEBUTTONUP:
+                    convert_button_pressed = False
                     mouse_pressed = False
                     line_coordinates.append("Unterbruch")
 
@@ -98,7 +125,7 @@ class Game:
                 line_coordinates = []
 
             self.screen.fill(BG_COLOR)  # draw empty screen
-            drawInterface(self.screen)
+            drawInterface(self.screen, font1, font2, convert_button_pressed)
             drawFigure(self.screen, line_coordinates)
             # Update
             pygame.time.delay(TIME_DELAY)
