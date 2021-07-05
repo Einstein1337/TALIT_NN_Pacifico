@@ -1,5 +1,6 @@
 import numpy as np
 import pygame
+import time
 from pygame import draw
 from pygame.constants import KEYDOWN, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION
 
@@ -13,6 +14,7 @@ WIN_WIDTH = drawing_surface_size + extra_space + line_width + 2
 WIN_HEIGHT = drawing_surface_size + 2
 
 consol_height = WIN_HEIGHT/2.5
+console_message_max_time = 5
 
 convert_button_side_lenght = 55
 convert_button_height = 20
@@ -33,7 +35,7 @@ BG_COLOR = WHITE
 ## FUNCTIONS ##
 
 
-def drawInterface(surface, f1, f2, cbp, consol):
+def drawInterface(surface, f1, f2, cbp, consol_m):
     pygame.draw.line(
         surface, BLACK, (drawing_surface_size, 0), (drawing_surface_size, WIN_HEIGHT), line_width)
 
@@ -47,8 +49,8 @@ def drawInterface(surface, f1, f2, cbp, consol):
         convert_button_x, convert_button_y, convert_button_side_lenght, convert_button_height), line_width)
     img1 = f1.render('Convert', True, BLACK)
     img2 = f2.render('Clear Display: Backspace', True, BLACK)
-    for k in range(len(consol)):
-        msg = f2.render(consol[k], True, BLACK)
+    for k in range(len(consol_m)):
+        msg = f2.render(consol_m[k].message, True, BLACK)
         surface.blit(msg, (WIN_WIDTH - extra_space +
                            1, WIN_HEIGHT - consol_height + k*text_size2))
     surface.blit(img1, (convert_button_x + 4, convert_button_y + 4))
@@ -68,6 +70,12 @@ def Convert(display, name, pos, size):
     # Blit portion of the display to the image
     image.blit(display, (0, 0), (pos, size))
     pygame.image.save(image, name)  # Save the image to the disk
+
+
+class ConsolMessage:
+    def __init__(self, message, start_time):
+        self.message = message
+        self.st = start_time
 
 
 class Game:
@@ -120,7 +128,7 @@ class Game:
                             if len(consol_messages) >= consol_height/text_size2 - 1:
                                 consol_messages = []
                             consol_messages.append(
-                                f"Converted to Image_{images}.png")
+                                ConsolMessage(f"Converted to Image_{images}.png", time.time()))
 
                 if event.type == MOUSEBUTTONUP:
                     convert_button_pressed = False
@@ -141,6 +149,16 @@ class Game:
 
             if keys[pygame.K_BACKSPACE] or keys[pygame.K_DELETE]:
                 line_coordinates = []
+
+            # updateConsol
+            messages_in_overtime = 0
+            time_now = time.time()
+            for h in range(len(consol_messages)):
+                if time_now - consol_messages[h].st >= console_message_max_time:
+                    messages_in_overtime += 1
+
+            for m in range(messages_in_overtime):
+                del consol_messages[m]
 
             self.screen.fill(BG_COLOR)  # draw empty screen
             drawInterface(self.screen, font1, font2,
