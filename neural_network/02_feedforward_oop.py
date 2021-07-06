@@ -6,8 +6,7 @@ class Network:
         self.neuron_list = neuron_list
         self.W = []
         for n in range(len(neuron_list)-1):
-            self.W.append(
-                np.random.uniform(-0.5, 0.5, (neuron_list[n+1], neuron_list[n])))
+            self.W.append(np.random.uniform(-0.5, 0.5, (neuron_list[n+1], neuron_list[n])))
 
     def sigmoid(self, z):
         return 1/(1+np.exp(-z))
@@ -15,26 +14,19 @@ class Network:
     def feedforward(self, input_array):
         next_hidden_layer_array = input_array
         for c in range(len(self.neuron_list)-1):
-            next_hidden_layer_array = self.sigmoid(
-                np.dot(self.W[c], next_hidden_layer_array))
+            next_hidden_layer_array = self.sigmoid(np.dot(self.W[c], next_hidden_layer_array))
         return next_hidden_layer_array  # last hidden layer array = output array
 
     def test(self, input_list):
         right_answers = 0
         for i in range(len(input_list)):
             split_input_list = input_list[i].split(",")
-            for h in range(len(split_input_list)):
-                if h == 0:
-                    target = int(split_input_list[0])
-                else:
-                    split_input_list[h] = float(split_input_list[h])/255
+            split_input_list = [int(i) for i in split_input_list]
+            target = int(split_input_list[0])
+            input_array = np.array(split_input_list[1:len(split_input_list)])/255
 
-            input_array = np.zeros(len(split_input_list)-1)
-            for a in range(len(split_input_list)-1):
-                input_array[a] = split_input_list[a+1]
-
+            # get index of highest value in output list
             output_list = self.feedforward(input_array).tolist()
-
             highest_value = max(output_list)
             highest_value_index = output_list.index(highest_value)
             if highest_value_index == target:
