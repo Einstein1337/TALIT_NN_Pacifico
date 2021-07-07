@@ -17,6 +17,9 @@ WIN_WIDTH = drawing_surface_size + extra_space + line_width + 2
 WIN_HEIGHT = drawing_surface_size + 2
 
 space_between_buttons = 10
+button_lenght = 55
+button_height = 20
+input_fiel_lenght = 100
 
 consol_height = WIN_HEIGHT/2
 console_message_max_time = 5
@@ -51,7 +54,13 @@ def drawIntroducingScreen(surface, bl, font):
         if bl[button].scene == 1:
             bl[button].drawButton(surface)
 
-def drawHiddenLayerScreen(surface, bl):
+def drawHiddenLayerScreen(surface, bl, font):
+    img_list = [font.render('Name:', True, BLACK),
+                font.render('Learning rate:', True, BLACK),
+                font.render('Hidden layers:', True, BLACK),]
+    for img in range(len(img_list)):
+        surface.blit(img_list[img], (WIN_WIDTH/10, WIN_HEIGHT/4+(button_height+space_between_buttons)*img + 4))
+
     for button in range(len(bl)):
         if bl[button].scene == 2:
             bl[button].drawButton(surface)
@@ -182,7 +191,7 @@ class ConsolMessage:
         self.st = start_time
 
 class Button:
-    def __init__(self, x, y, lenght, height, font, name, name_x, name_y, scene):
+    def __init__(self, x, y, lenght, height, font, name, name_x, name_y, scene, active, type):
         self.x = x
         self.y = y
         self.len = lenght
@@ -194,6 +203,8 @@ class Button:
         self.name_y = self.y + name_y
         self.pressed = False
         self.scene = scene
+        self.active = active
+        self.type = type
 
         if name == 'Detect':
             self.message = "Detected"
@@ -203,7 +214,7 @@ class Button:
             self.message = ""
 
     def drawButton(self, surface):
-        if self.pressed:
+        if self.pressed == True or self.active == False:
             color = GRAY
         else:
             color = WHITE
@@ -250,16 +261,15 @@ class Game:
         font1 = pygame.font.SysFont('Arial.ttf', text_size1)
         font2 = pygame.font.SysFont('Arial.ttf', text_size2)
         consol_messages = []
-        
-        button_lenght = 55
-        input_fiel_lenght = 100
-        button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, 20, font1, 'Detect', 7, 4, 4),
-                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, 20, font1, 'Clear', 11, 4, 4),
-                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT - WIN_HEIGHT/3, button_lenght, 20, font1, 'OK', 17, 4, 1),
-                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4, input_fiel_lenght, 20, font1, '', 1, 4, 2),
-                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 30, input_fiel_lenght, 20, font1, '', 1, 4, 2),
-                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 60, input_fiel_lenght, 20, font1, '', 1, 4, 2),
-                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + 100, button_lenght, 20, font1, 'OK', 17, 4, 2)]
+
+        active_input_fiel = ""
+        button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, button_height, font1, 'Detect', 7, 4, 4, True, "button"),
+                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, button_height, font1, 'Clear', 11, 4, 4, True, "button"),
+                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT - WIN_HEIGHT/3, button_lenght, button_height, font1, 'OK', 17, 4, 1, True, "button"),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_str"),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 30, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_float"),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 60, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_float"),
+                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + 100, button_lenght, button_height, font1, 'OK', 17, 4, 2, False, "button")]
         while True:
             # key events
             for event in pygame.event.get():
@@ -281,8 +291,15 @@ class Game:
                                 elif button_list[button].name == 'Clear':
                                     line_coordinates = []
                                 elif button_list[button].name == 'OK':
-                                    introducing_scene = False
-                                    select_hidden_layers_scene = True
+                                    if button_list[button].scene == 1:
+                                        introducing_scene = False
+                                        select_hidden_layers_scene = True
+                                    elif button_list[button].scene == 2:
+                                        if button_list[button].active:
+                                            select_hidden_layers_scene = False
+                                            select_neurons_per_hidden_layer_scene = True
+                                elif button_list[button].name == '':
+                                    active_input_fiel = button_list[button]
                                 if button_list[button].message != "":
                                     if len(consol_messages) >= consol_height/text_size2 - 1:
                                         consol_messages = []
@@ -294,6 +311,18 @@ class Game:
                     mouse_pressed = False
                     if len(line_coordinates) > 0:
                         line_coordinates.append("break")
+                    
+                if event.type == KEYDOWN:
+
+                    if event.key == pygame.K_BACKSPACE:
+                        active_input_fiel.name = active_input_fiel.name[:-1]
+                    elif len(active_input_fiel.name) <= 11:
+                        if active_input_fiel.type == "input_float":
+                            if event.key == pygame.K_0 or event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5 or event.key == pygame.K_6 or event.key == pygame.K_7 or event.key == pygame.K_8 or event.key == pygame.K_9 or event.key == pygame.K_PERIOD: 
+                                active_input_fiel.name += event.unicode
+                        else:
+                            active_input_fiel.name += event.unicode
+                    active_input_fiel.img = font1.render(active_input_fiel.name, True, BLACK)
 
                 if drawing_scene:
                     if event.type == MOUSEMOTION:
@@ -323,13 +352,14 @@ class Game:
                 for m in range(messages_in_overtime):
                     del consol_messages[m]
 
+
             self.screen.fill(BG_COLOR)  # draw empty screen
             
             if introducing_scene:
                 drawIntroducingScreen(self.screen, button_list, font2)
 
             elif select_hidden_layers_scene:
-                drawHiddenLayerScreen(self.screen, button_list)
+                drawHiddenLayerScreen(self.screen, button_list, font2)
 
             elif select_neurons_per_hidden_layer_scene:
                 drawNeuronScreen(self.screen)
