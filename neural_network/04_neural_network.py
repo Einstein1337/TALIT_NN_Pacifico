@@ -114,8 +114,8 @@ class Network:
         return right_answers/len(input_list)*100
 
 
-
-toy_problem_network = Network([4, 3, 2], 0.125, "toy problem network")
+learning_rate = 0.02
+toy_problem_network = Network([4, 3, 2], learning_rate, "toy problem network")
 mnist_network = Network([784, 50, 50, 10], 0.01, "MNIST network")
 
 # get inputs and target from csv file
@@ -131,16 +131,20 @@ with open('data\mnist_train.csv', 'r') as f2tr:
 with open('data\mnist_test.csv', 'r') as f2ts:
     input_list_mnist_test = f2ts.readlines()
 
-        
-toy_problem_network.train(input_list_toy_problem_train)
-mnist_network.train(input_list_mnist_train)
 
-precision_toy_problem = toy_problem_network.test(input_list_toy_problem_test)
-precision_mnist = mnist_network.test(input_list_mnist_test)
+for i in range(1):  
+    toy_problem_network.__init__([4, 3, 2], learning_rate, "toy problem network")
+    #mnist_network.__init__([784, 50, 50, 10], 0.0121, "MNIST network")
+    toy_problem_network.train(input_list_toy_problem_train)
+    #mnist_network.train(input_list_mnist_train)
+
+    precision_toy_problem = toy_problem_network.test(input_list_toy_problem_test)
+    #precision_mnist = mnist_network.test(input_list_mnist_test)
 
 
-saveBestWeightsLR(precision_toy_problem, toy_problem_network, "t")
-saveBestWeightsLR(precision_mnist, "m")
+    saveBestWeightsLR(precision_toy_problem, toy_problem_network, "t")
+    #saveBestWeightsLR(precision_mnist, mnist_network, "m")
 
-print(f"Toy problem network precision: {precision_toy_problem}%")
-print(f"MNIST network precision: {precision_mnist}%")
+    print(f"Toy problem network precision: {precision_toy_problem}%")
+    #print(f"MNIST network precision: {precision_mnist}%")
+print("Done")
