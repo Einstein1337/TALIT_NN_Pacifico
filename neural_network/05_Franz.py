@@ -57,7 +57,7 @@ def drawIntroducingScreen(surface, bl, font):
 def drawHiddenLayerScreen(surface, bl, font):
     img_list = [font.render('Name:', True, BLACK),
                 font.render('Learning rate:', True, BLACK),
-                font.render('Hidden layers:', True, BLACK),]
+                font.render('Hidden layers (max. 5):', True, BLACK),]
     for img in range(len(img_list)):
         surface.blit(img_list[img], (WIN_WIDTH/10, WIN_HEIGHT/4+(button_height+space_between_buttons)*img + 4))
 
@@ -191,7 +191,7 @@ class ConsolMessage:
         self.st = start_time
 
 class Button:
-    def __init__(self, x, y, lenght, height, font, name, name_x, name_y, scene, active, type):
+    def __init__(self, x, y, lenght, height, font, name, name_x, name_y, scene, active, type, tag):
         self.x = x
         self.y = y
         self.len = lenght
@@ -205,6 +205,7 @@ class Button:
         self.scene = scene
         self.active = active
         self.type = type
+        self.tag = tag
 
         if name == 'Detect':
             self.message = "Detected"
@@ -263,14 +264,18 @@ class Game:
         consol_messages = []
 
         inputs_scene_2 = 0
-        active_input_fiel = ""
-        button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, button_height, font1, 'Detect', 7, 4, 4, True, "button"),
-                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, button_height, font1, 'Clear', 11, 4, 4, True, "button"),
-                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT - WIN_HEIGHT/3, button_lenght, button_height, font1, 'OK', 17, 4, 1, True, "button"),
-                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_str"),
-                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 30, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_float"),
-                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 60, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_float"),
-                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + 100, button_lenght, button_height, font1, 'OK', 17, 4, 2, False, "button")]
+        active_input_field = ""
+        button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, button_height, font1, 'Detect', 7, 4, 4, True, "button", ""),
+                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, button_height, font1, 'Clear', 11, 4, 4, True, "button", ""),
+                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT - WIN_HEIGHT/3, button_lenght, button_height, font1, 'OK', 17, 4, 1, True, "button", ""),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_str", "name"),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 30, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_float", "learning_rate"),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 60, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_hidden_layer", "hidden_layers"),
+                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + 100, button_lenght, button_height, font1, 'OK', 17, 4, 2, False, "button", "")]
+        
+        network_name = ""
+        learning_rate = 0
+        hidden_layers = 0
         while True:
             # key events
             for event in pygame.event.get():
@@ -297,11 +302,16 @@ class Game:
                                         select_hidden_layers_scene = True
                                     elif button_list[button].scene == 2:
                                         if button_list[button].active:
+                                            if learning_rate == 0:
+                                                learning_rate = 0.00000000001
+                                            print(network_name)
+                                            print(learning_rate)
+                                            print(hidden_layers)
                                             select_hidden_layers_scene = False
                                             select_neurons_per_hidden_layer_scene = True
 
                                 else:
-                                    active_input_fiel = button_list[button]
+                                    active_input_field = button_list[button]
                                 if button_list[button].message != "":
                                     if len(consol_messages) >= consol_height/text_size2 - 1:
                                         consol_messages = []
@@ -318,14 +328,30 @@ class Game:
                 if event.type == KEYDOWN:
 
                     if event.key == pygame.K_BACKSPACE:
-                        active_input_fiel.name = active_input_fiel.name[:-1]
-                    elif len(active_input_fiel.name) <= 11:
-                        if active_input_fiel.type == "input_float":
+                        active_input_field.name = active_input_field.name[:-1]
+                    
+                    elif active_input_field.type == "input_hidden_layer" and active_input_field.name == '':
+                        if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5: 
+                            active_input_field.name += event.unicode
+                    
+                    elif active_input_field.type != "input_hidden_layer" and len(active_input_field.name) <= 11:
+                        if active_input_field.type == "input_float":
                             if event.key == pygame.K_0 or event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5 or event.key == pygame.K_6 or event.key == pygame.K_7 or event.key == pygame.K_8 or event.key == pygame.K_9 or event.key == pygame.K_PERIOD: 
-                                active_input_fiel.name += event.unicode
+                                active_input_field.name += event.unicode
                         else:
-                            active_input_fiel.name += event.unicode
-                    active_input_fiel.img = font1.render(active_input_fiel.name, True, BLACK)
+                            active_input_field.name += event.unicode
+
+                    
+                    if active_input_field.name != '':
+                        if active_input_field.tag == "name":
+                            network_name = active_input_field.name
+                        elif active_input_field.tag == "learning_rate":
+
+                            learning_rate = float(active_input_field.name)
+                        elif active_input_field.tag == "hidden_layers":
+                            hidden_layers = int(active_input_field.name)
+
+                    active_input_field.img = font1.render(active_input_field.name, True, BLACK)
 
                 #update buttons
                 for field in range(len(button_list)):
