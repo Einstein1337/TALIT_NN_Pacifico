@@ -262,6 +262,7 @@ class Game:
         font2 = pygame.font.SysFont('Arial.ttf', text_size2)
         consol_messages = []
 
+        inputs_scene_2 = 0
         active_input_fiel = ""
         button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, button_height, font1, 'Detect', 7, 4, 4, True, "button"),
                       Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, button_height, font1, 'Clear', 11, 4, 4, True, "button"),
@@ -298,7 +299,8 @@ class Game:
                                         if button_list[button].active:
                                             select_hidden_layers_scene = False
                                             select_neurons_per_hidden_layer_scene = True
-                                elif button_list[button].name == '':
+
+                                else:
                                     active_input_fiel = button_list[button]
                                 if button_list[button].message != "":
                                     if len(consol_messages) >= consol_height/text_size2 - 1:
@@ -311,6 +313,7 @@ class Game:
                     mouse_pressed = False
                     if len(line_coordinates) > 0:
                         line_coordinates.append("break")
+
                     
                 if event.type == KEYDOWN:
 
@@ -324,6 +327,19 @@ class Game:
                             active_input_fiel.name += event.unicode
                     active_input_fiel.img = font1.render(active_input_fiel.name, True, BLACK)
 
+                #update buttons
+                for field in range(len(button_list)):
+                    if button_list[field].scene == 2:
+                        if button_list[field].name != '':
+                            inputs_scene_2 += 1
+                        if inputs_scene_2 > 3:
+                            button_list[field].active = True
+                        else:
+                            if button_list[field].name == 'OK':
+                                button_list[field].active = False
+                inputs_scene_2 = 0
+                
+                        
                 if drawing_scene:
                     if event.type == MOUSEMOTION:
                         if mouse_pressed:
