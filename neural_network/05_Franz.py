@@ -27,6 +27,9 @@ TIME_DELAY = int(1000/FPS)
 
 text_size1 = 20
 text_size2 = 15
+
+
+
 # Colors
 WHITE = (255, 255, 255)
 GRAY = (200, 200, 200)
@@ -34,9 +37,31 @@ BLACK = (0, 0, 0)
 BG_COLOR = WHITE
 
 ## FUNCTIONS ##
+def drawIntroducingScreen(surface, bl, font):
+    img_list = [font.render('This is a handwriting recognition software. It can detect numbers', True, BLACK),
+                font.render('written by hand between 0 and 9. But first of all, you need to', True, BLACK),
+                font.render('create and train a neuronal network. For that you need to tell', True, BLACK),
+                font.render('the programm the number of hidden layers and the number of neurons', True, BLACK),
+                font.render('per hidden layer. You can also select a learning rate for your AI.', True, BLACK),
+                font.render('The better numbers you choose the smarter your AI will be. Have fun', True, BLACK)]
+    for img in range(len(img_list)):
+        surface.blit(img_list[img], (WIN_WIDTH/10, WIN_HEIGHT/4+text_size2*img))
+
+    for button in range(len(bl)):
+        if bl[button].scene == 1:
+            bl[button].drawButton(surface)
+
+def drawHiddenLayerScreen(surface, bl):
+    for button in range(len(bl)):
+        if bl[button].scene == 2:
+            bl[button].drawButton(surface)
+
+
+def drawNeuronScreen(surface):
+    pass
 
 # cbp = convert button pressed, cdbp = clear display button pressed
-def drawInterface(surface, f, button_list, consol_m):
+def drawDrawingScreen(surface, f, button_list, consol_m):
     pygame.draw.line(
         surface, BLACK, (drawing_surface_size, 0), (drawing_surface_size, WIN_HEIGHT), line_width)
 
@@ -157,7 +182,7 @@ class ConsolMessage:
         self.st = start_time
 
 class Button:
-    def __init__(self, x, y, lenght, height, font, name, name_x, name_y):
+    def __init__(self, x, y, lenght, height, font, name, name_x, name_y, scene):
         self.x = x
         self.y = y
         self.len = lenght
@@ -168,11 +193,14 @@ class Button:
         self.name_x = self.x + name_x
         self.name_y = self.y + name_y
         self.pressed = False
+        self.scene = scene
 
         if name == 'Detect':
             self.message = "Detected"
         elif name == 'Clear':
             self.message = "Screen cleared"
+        else: 
+            self.message = ""
 
     def drawButton(self, surface):
         if self.pressed:
@@ -209,6 +237,12 @@ class Game:
         self.living_cells = []
 
     def play(self):
+        #Scenes
+        introducing_scene = True
+        select_hidden_layers_scene = False
+        select_neurons_per_hidden_layer_scene = False
+        drawing_scene = False
+
         line_coordinates = []
         mouse_pressed = False
         detect_button_pressed = False
@@ -218,8 +252,14 @@ class Game:
         consol_messages = []
         
         button_lenght = 55
-        ButtonList = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, 20, font1, 'Detect', 7, 4),
-                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, 20, font1, 'Clear', 11, 4)]
+        input_fiel_lenght = 100
+        button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, 20, font1, 'Detect', 7, 4, 4),
+                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, 20, font1, 'Clear', 11, 4, 4),
+                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT - WIN_HEIGHT/3, button_lenght, 20, font1, 'OK', 17, 4, 1),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4, input_fiel_lenght, 20, font1, '', 1, 4, 2),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 30, input_fiel_lenght, 20, font1, '', 1, 4, 2),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 60, input_fiel_lenght, 20, font1, '', 1, 4, 2),
+                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + 100, button_lenght, 20, font1, 'OK', 17, 4, 2)]
         while True:
             # key events
             for event in pygame.event.get():
@@ -234,53 +274,72 @@ class Game:
                         if x < WIN_WIDTH - extra_space:
                             line_coordinates.append((x, y))
                         
-                        for button in range(len(ButtonList)): 
-                            if ButtonList[button].Pressed():
-                                if ButtonList[button].name == 'Detect':
+                        for button in range(len(button_list)): 
+                            if button_list[button].Pressed():
+                                if button_list[button].name == 'Detect':
                                     pass
-                                elif ButtonList[button].name == 'Clear':
+                                elif button_list[button].name == 'Clear':
                                     line_coordinates = []
-
-                                if len(consol_messages) >= consol_height/text_size2 - 1:
-                                    consol_messages = []
-                                consol_messages.append(ConsolMessage(f"{ButtonList[button].message}", time.time()))
+                                elif button_list[button].name == 'OK':
+                                    introducing_scene = False
+                                    select_hidden_layers_scene = True
+                                if button_list[button].message != "":
+                                    if len(consol_messages) >= consol_height/text_size2 - 1:
+                                        consol_messages = []
+                                    consol_messages.append(ConsolMessage(f"{button_list[button].message}", time.time()))
 
                 if event.type == MOUSEBUTTONUP:
-                    for b in range(len(ButtonList)):
-                        ButtonList[b].pressed = False
+                    for b in range(len(button_list)):
+                        button_list[b].pressed = False
                     mouse_pressed = False
-                    line_coordinates.append("break")
+                    if len(line_coordinates) > 0:
+                        line_coordinates.append("break")
 
-                if event.type == MOUSEMOTION:
-                    if mouse_pressed:
-                        (x, y) = pygame.mouse.get_pos()
-                        if x < WIN_WIDTH - extra_space - drawing_line_width/2 and x > 0 and y > 0 and y < WIN_HEIGHT:
-                            line_coordinates.append((x, y))
-                        else:
-                            line_coordinates.append("break")
+                if drawing_scene:
+                    if event.type == MOUSEMOTION:
+                        if mouse_pressed:
+                            (x, y) = pygame.mouse.get_pos()
+                            if x < WIN_WIDTH - extra_space - drawing_line_width/2 and x > 0 and y > 0 and y < WIN_HEIGHT:
+                                line_coordinates.append((x, y))
+                            else:
+                                line_coordinates.append("break")
 
             keys = pygame.key.get_pressed()
             if keys[pygame.K_ESCAPE]:
                 self.exit()
 
-            if keys[pygame.K_BACKSPACE] or keys[pygame.K_DELETE]:
-                line_coordinates = []
+            if drawing_scene:
+                if keys[pygame.K_BACKSPACE] or keys[pygame.K_DELETE]:
+                    line_coordinates = []
 
-            # updateConsol
+                # updateConsol
 
-            messages_in_overtime = 0
-            time_now = time.time()
-            for h in range(len(consol_messages)):
-                if time_now - consol_messages[h].st >= console_message_max_time:
-                    messages_in_overtime += 1
+                messages_in_overtime = 0
+                time_now = time.time()
+                for h in range(len(consol_messages)):
+                    if time_now - consol_messages[h].st >= console_message_max_time:
+                        messages_in_overtime += 1
 
-            for m in range(messages_in_overtime):
-                del consol_messages[m]
+                for m in range(messages_in_overtime):
+                    del consol_messages[m]
 
             self.screen.fill(BG_COLOR)  # draw empty screen
-            drawInterface(self.screen, font2,
-                          ButtonList, consol_messages)
-            drawFigure(self.screen, line_coordinates)
+            
+            if introducing_scene:
+                drawIntroducingScreen(self.screen, button_list, font2)
+
+            elif select_hidden_layers_scene:
+                drawHiddenLayerScreen(self.screen, button_list)
+
+            elif select_neurons_per_hidden_layer_scene:
+                drawNeuronScreen(self.screen)
+
+            elif drawing_scene:
+                drawDrawingScreen(self.screen, font2,
+                            button_list, consol_messages)
+                drawFigure(self.screen, line_coordinates)
+
+            
 
             # Update
             pygame.time.delay(TIME_DELAY)
