@@ -5,7 +5,7 @@ from numpy.core.numeric import outer
 import os
 import pygame
 import time
-from pygame import draw
+from pygame import Surface, draw
 from pygame.constants import KEYDOWN, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION
 
 ## VARIABLES ##
@@ -16,28 +16,29 @@ drawing_surface_size = image_res*image_res_factor  # square width = height
 extra_space = 15 * image_res_factor
 WIN_WIDTH = drawing_surface_size + extra_space + line_width 
 WIN_HEIGHT = drawing_surface_size 
-print(WIN_WIDTH)
-print(WIN_HEIGHT)
 
 space_between_buttons = WIN_HEIGHT/28
 button_lenght = WIN_WIDTH/7.8545
 button_height = WIN_HEIGHT/14
 input_fiel_lenght = WIN_WIDTH/4.32
-print(space_between_buttons)
-print(button_height)
-print(button_lenght)
-print(input_fiel_lenght)
 button_space_and_height = space_between_buttons + button_height
 
 consol_height = WIN_HEIGHT/2
 console_message_max_time = 5
-
+print(WIN_HEIGHT)
+print(WIN_WIDTH)
 drawing_line_width = 3
 FPS = 1000
 TIME_DELAY = int(1000/FPS)
 
+
 text_size1 = int(WIN_HEIGHT/14)
 text_size2 = int(WIN_HEIGHT/18.666666)
+
+loading_bar_max_len = WIN_WIDTH/2
+loading_bar_h = WIN_HEIGHT/10
+loading_bar_x = WIN_WIDTH/4
+loading_bar_y = WIN_HEIGHT/2 - loading_bar_h/2
 
 # Colors
 WHITE = (255, 255, 255)
@@ -86,15 +87,31 @@ def drawNeuronScene(surface, bl, font):
     for img in range(len(img_list)):
         surface.blit(img_list[img], (WIN_WIDTH/10, WIN_HEIGHT/5+button_space_and_height*img + (button_height/2-text_size2/4)))
 
-def drawTrainingScene():
-    pass
+def drawSuccessRateScene(surface, bl, font, precision, name):
+    img = font.render(f'{name} has a success rate of {int(precision)}%', True, BLACK)
+    surface.blit(img, (WIN_WIDTH/3.75, WIN_HEIGHT/4))
+
+    for btn in range(len(bl)):
+        if bl[btn].scene == 4:
+            bl[btn].drawButton(surface)
+
+def drawLoadingBar(surface, font, percentage, mode):
+    surface.fill(BG_COLOR)
+    pygame.draw.rect(surface, BLACK,  (loading_bar_x, loading_bar_y, loading_bar_max_len, loading_bar_h), line_width)
+    pygame.draw.rect(surface, BLACK,  (loading_bar_x, loading_bar_y, loading_bar_max_len*percentage, loading_bar_h))
+    img = font.render(f'{mode}: {int(percentage*100)}%', True, BLACK)
+    surface.blit(img, (WIN_WIDTH/2.5, WIN_HEIGHT-WIN_HEIGHT/2.5))
+    pygame.display.flip()
+    pygame.display.update()
+
 # cbp = convert button pressed, cdbp = clear display button pressed
 def drawDrawingScene(surface, f, button_list, consol_m):
     pygame.draw.line(
         surface, BLACK, (drawing_surface_size, 0), (drawing_surface_size, WIN_HEIGHT), line_width)
 
     for btn in range(len(button_list)):
-        button_list[btn].drawButton(surface)
+        if button_list[btn].scene == 5:
+            button_list[btn].drawButton(surface)
 
     #text in consol
     for k in range(len(consol_m)):
@@ -129,6 +146,17 @@ def saveBestWeightsLR(precision, network):
         f.write(f"{network.learning_rate}\n")
         f.write(f"{network.W}")
 
+def TrainTestNetwork(network, surface, font):
+    # get inputs and target from csv file
+    with open('data\mnist_train.csv', 'r') as ftr:
+        input_list_mnist_train = ftr.readlines()
+
+    with open('data\mnist_test.csv', 'r') as fts:
+        input_list_mnist_test = fts.readlines()
+    
+    network.train(input_list_mnist_train, surface, font)
+    precision = network.test(input_list_mnist_test, surface, font)
+    return [True, precision]
 
 class Network:
     def __init__(self, neuron_list, learning_rate, name):
@@ -138,6 +166,8 @@ class Network:
         self.output_neurons = neuron_list[-1]
         self.learning_rate = learning_rate
         self.hidden_layer_arrays = []
+        self.training_percentage = 0
+        self.test_percentage = 0
         self.W = []
         for layer in range(len(neuron_list)-1):
             self.W.append(np.random.uniform(-0.5, 0.5, (neuron_list[layer+1], neuron_list[layer])))
@@ -165,10 +195,10 @@ class Network:
             Cost += np.power(E_out[e], 2)
         return 0.5*Cost
 
-    def train(self, input_list):
+    def train(self, input_list, surface, font):
         for line in range(len(input_list)):
             if line%200 == 0:
-                print(f"Training {self.name}: {int(line/len(input_list) * 100)}%", end="\r")
+                drawLoadingBar(surface, font, line/len(input_list), "Training")
             split_input_list = input_list[line].split(",")
             split_input_list = [float(i) for i in split_input_list]
             target_index = int(split_input_list[0])
@@ -189,13 +219,13 @@ class Network:
             W_new.reverse()
             self.W = W_new
             self.hidden_layer_arrays = []
-        print(f"Training {self.name}: 100%")
+        drawLoadingBar(surface, font, 1, "Training")
         
-    def test(self, input_list):
+    def test(self, input_list, surface, font):
         right_answers = 0
         for line in range(len(input_list)):
             if line%100 == 0:
-                print(f"Test {self.name}: {int(line/len(input_list) * 100)}%", end="\r")
+                drawLoadingBar(surface, font, line/len(input_list), " Testing")
             split_input_list = input_list[line].split(",")
             split_input_list = [float(i) for i in split_input_list]
             target = int(split_input_list[0])
@@ -208,7 +238,7 @@ class Network:
             if highest_value_index == target:
                 right_answers += 1
 
-        print(f"Test {self.name}: 100%")
+        drawLoadingBar(surface, font, 1, " Testing")
         return right_answers/len(input_list)*100
 
 class ConsolMessage:
@@ -279,7 +309,7 @@ class Game:
         introducing_scene = True
         select_hidden_layers_scene = False
         select_neurons_per_hidden_layer_scene = False
-        training_scene = False
+        success_rate_scene = False
         drawing_scene = False
 
         line_coordinates = []
@@ -291,13 +321,16 @@ class Game:
         consol_messages = []
 
         active_input_field = ""
-        button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, button_height, font1, 'Detect', WIN_WIDTH/61.7143, button_height/5, 4, True, "button", ""),
-                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, button_height, font1, 'Clear', WIN_WIDTH/39.2727, button_height/5, 4, True, "button", ""),
+        button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, button_height, font1, 'Detect', WIN_WIDTH/61.7143, button_height/5, 5, True, "button", ""),
+                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, button_height, font1, 'Clear', WIN_WIDTH/39.2727, button_height/5, 5, True, "button", ""),
                       Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT - WIN_HEIGHT/3, button_lenght, button_height, font1, 'OK', WIN_WIDTH/25.41176, button_height/5, 1, True, "button", ""),
                       Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_str", "name"),
                       Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + button_space_and_height, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_float", "learning_rate"),
                       Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + button_space_and_height*2, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_hidden_layer", "hidden_layers"),
-                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + button_space_and_height*3+space_between_buttons, button_lenght, button_height, font1, 'OK', WIN_WIDTH/25.41176, button_height/5, 2, False, "button", "")]
+                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + button_space_and_height*3+space_between_buttons, button_lenght, button_height, font1, 'OK', WIN_WIDTH/25.41176, button_height/5, 2, False, "button", ""),
+                      Button(WIN_WIDTH/2  - button_lenght/2*1.5 - button_lenght*1.5 - space_between_buttons, WIN_HEIGHT/2, button_lenght*1.5, button_height, font1, 'Recreate', WIN_WIDTH/39.2727, button_height/5, 4, True, "button", ""),
+                      Button(WIN_WIDTH/2 - button_lenght/2*1.5, WIN_HEIGHT/2, button_lenght*1.5, button_height, font1, 'Train again', WIN_WIDTH/107.75, button_height/5, 4, True, "button", ""),
+                      Button(WIN_WIDTH/2 + button_lenght/2*1.5 + space_between_buttons, WIN_HEIGHT/2, button_lenght*1.5, button_height, font1, 'Go on', WIN_WIDTH/21.55, button_height/5, 4, True, "button", "")]
         
         network_name = ""
         learning_rate = 0
@@ -341,8 +374,9 @@ class Game:
                                         elif button_list[button].scene == 3:
                                             if select_neurons_per_hidden_layer_scene:
                                                 mnist_network = Network(getLayerList(neuron_list), learning_rate, network_name)
+                                                success_rate_list = TrainTestNetwork(mnist_network, self.screen, font1)
+                                                success_rate_scene = success_rate_list[0]
                                                 select_neurons_per_hidden_layer_scene = False
-                                                training_scene = True
                                     else:
                                         active_input_field = button_list[button]
                                     if button_list[button].message != "":
@@ -456,8 +490,8 @@ class Game:
             elif select_neurons_per_hidden_layer_scene:
                 drawNeuronScene(self.screen, button_list, font2)
             
-            elif training_scene :
-                drawTrainingScene()
+            elif success_rate_scene:
+                drawSuccessRateScene(self.screen, button_list, font1, success_rate_list[1], mnist_network.name)
 
             elif drawing_scene:
                 drawDrawingScene(self.screen, font2,
@@ -472,13 +506,6 @@ class Game:
             pygame.display.update()
         pygame.quit()
 
-
-# get inputs and target from csv file
-with open('data\mnist_train.csv', 'r') as ftr:
-    input_list_mnist_train = ftr.readlines()
-
-with open('data\mnist_test.csv', 'r') as fts:
-    input_list_mnist_test = fts.readlines()
 
 if __name__ == "__main__":
     Game().play()
