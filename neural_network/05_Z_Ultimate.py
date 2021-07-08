@@ -1,3 +1,4 @@
+from sys import float_repr_style
 import numpy as np
 from numpy.core.fromnumeric import transpose
 from numpy.core.function_base import add_newdoc
@@ -7,6 +8,7 @@ from numpy.lib.function_base import delete
 import pygame
 import time
 from pygame import Surface, draw
+from pygame import surface
 from pygame.constants import KEYDOWN, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION
 
 ## VARIABLES ##
@@ -28,7 +30,7 @@ consol_height = WIN_HEIGHT/2
 console_message_max_time = 5
 print(WIN_HEIGHT)
 print(WIN_WIDTH)
-drawing_line_width = image_res_factor
+drawing_line_width = image_res_factor*2
 FPS = 60
 TIME_DELAY = int(1000/FPS)
 
@@ -89,7 +91,7 @@ def drawNeuronScene(surface, bl, font):
         surface.blit(img_list[img], (WIN_WIDTH/10, WIN_HEIGHT/5+button_space_and_height*img + (button_height/2-text_size2/4)))
 
 def drawSuccessRateScene(surface, bl, font, precision, name):
-    success_string = f'{name} has a success rate of {int(precision)}%'
+    success_string = f'{name} has a success rate of {float(precision)}%'
     img = font.render(success_string, True, BLACK)
     surface.blit(img, (WIN_WIDTH/2  - button_lenght/2*1.5 - button_lenght*1.5 - space_between_buttons, WIN_HEIGHT/4))
 
@@ -139,17 +141,31 @@ def getLayerList(neuron_list):
     layer_list.append(10)
     return layer_list
 
-def saveBestWeightsLR(precision, network):
-    with open('Best_weights_learning_rate_mnist.txt', 'r') as f:
-        file_lines = f.readlines()
-    highest_percentage = float(file_lines[0])
-    if precision > highest_percentage:
-        f = open('Best_weights_learning_rate_mnist.txt', 'w')
-        f.write(f"{precision}\n")
-        f.close()
-        f = open('Best_weights_learning_rate_mnist.txt', 'a')
-        f.write(f"{network.learning_rate}\n")
-        f.write(f"{network.W}")
+def saveBestWeights(precision, network):
+    with open('Best_precision_number_weights_z_ultimate.txt', 'r') as f:
+        file_line = f.readlines()
+    highest_precision = float(file_line[0])
+    if precision > highest_precision:
+        with open('Best_precision_number_weights_z_ultimate.txt', 'w') as f:
+            f.write(f"{precision}\n")
+        with open('Best_precision_number_weights_z_ultimate.txt', 'a') as f:
+            f.write(f"{network.neuron_list}\n")
+            f.write(f"{network.learning_rate}\n")
+            f.write(network.name)
+        with open('Best_weights_z_ultimate.npy', 'wb') as f:
+            for weights in range(len(network.W)):
+                np.save(f, network.W[weights])
+                
+def detectNumber(surface, network):
+    input_list = []
+    for x in range(image_res):
+        for y in range(image_res):
+            if surface.get_at((x*image_res_factor,y*image_res_factor))[0] == 255:
+                append_pixel = 0
+            else:
+                append_pixel = 1
+            input_list.append(append_pixel)
+    return network.detect(np.array(input_list))
 
 def TrainTestNetwork(network, surface, font):
     # get inputs and target from csv file
@@ -161,6 +177,7 @@ def TrainTestNetwork(network, surface, font):
     
     network.train(input_list_mnist_train, surface, font)
     precision = network.test(input_list_mnist_test, surface, font)
+    saveBestWeights(precision, network)
     return [True, precision]
 
 class Network:
@@ -180,6 +197,13 @@ class Network:
     def sigmoid(self, z):
         return 1/(1+np.exp(-z))
 
+    def detect(self, input_array):
+        next_hidden_layer_array = input_array
+        for hidden_layer in range(len(self.neuron_list)-1):
+            next_hidden_layer_array = self.sigmoid(np.dot(self.W[hidden_layer], next_hidden_layer_array))
+        output_list = next_hidden_layer_array.tolist()
+        highest_output = max(output_list)
+        return output_list.index(highest_output)
 
     def feedforward(self, input_array):
         next_hidden_layer_array = input_array
@@ -358,10 +382,11 @@ class Game:
                         for button in range(len(button_list)): 
                             if button_list[button].active:
                                 if button_list[button].Pressed():
-                                    if button_list[button].name == 'Detect':
-                                        pass
-                                    elif button_list[button].name == 'Clear':
-                                        line_coordinates = []
+                                    if drawing_scene:
+                                        if button_list[button].name == 'Detect':  
+                                            button_list[button].message = f"Detected {detectNumber(self.screen, mnist_network)}"
+                                        elif button_list[button].name == 'Clear':
+                                            line_coordinates = []
                                     elif button_list[button].name == 'OK' or button_list[button].name == 'Create / Train':
                                         if button_list[button].scene == 1:
                                             if introducing_scene:
