@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.core.fromnumeric import transpose
+from numpy.core.function_base import add_newdoc
 from numpy.core.numeric import outer
 import os
 import pygame
@@ -10,16 +11,23 @@ from pygame.constants import KEYDOWN, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTIO
 ## VARIABLES ##
 line_width = 2
 image_res = 28  # image is square
-image_res_factor = 10
+image_res_factor = 20
 drawing_surface_size = image_res*image_res_factor  # square width = height
-extra_space = 150
-WIN_WIDTH = drawing_surface_size + extra_space + line_width + 2
-WIN_HEIGHT = drawing_surface_size + 2
+extra_space = 15 * image_res_factor
+WIN_WIDTH = drawing_surface_size + extra_space + line_width 
+WIN_HEIGHT = drawing_surface_size 
+print(WIN_WIDTH)
+print(WIN_HEIGHT)
 
-space_between_buttons = 10
-button_lenght = 55
-button_height = 20
-input_fiel_lenght = 100
+space_between_buttons = WIN_HEIGHT/28
+button_lenght = WIN_WIDTH/7.8545
+button_height = WIN_HEIGHT/14
+input_fiel_lenght = WIN_WIDTH/4.32
+print(space_between_buttons)
+print(button_height)
+print(button_lenght)
+print(input_fiel_lenght)
+button_space_and_height = space_between_buttons + button_height
 
 consol_height = WIN_HEIGHT/2
 console_message_max_time = 5
@@ -28,10 +36,8 @@ drawing_line_width = 3
 FPS = 1000
 TIME_DELAY = int(1000/FPS)
 
-text_size1 = 20
-text_size2 = 15
-
-
+text_size1 = int(WIN_HEIGHT/14)
+text_size2 = int(WIN_HEIGHT/18.666666)
 
 # Colors
 WHITE = (255, 255, 255)
@@ -59,15 +65,26 @@ def drawHiddenLayerScreen(surface, bl, font):
                 font.render('Learning rate:', True, BLACK),
                 font.render('Hidden layers (max. 5):', True, BLACK),]
     for img in range(len(img_list)):
-        surface.blit(img_list[img], (WIN_WIDTH/10, WIN_HEIGHT/4+(button_height+space_between_buttons)*img + 4))
+        surface.blit(img_list[img], (WIN_WIDTH/10, WIN_HEIGHT/4+button_space_and_height*img + (button_height/2-text_size2/4)))
 
     for button in range(len(bl)):
         if bl[button].scene == 2:
             bl[button].drawButton(surface)
 
 
-def drawNeuronScreen(surface):
-    pass
+def drawNeuronScreen(surface, bl, font):
+    buttons_in_scene = 0
+    for button in range(len(bl)):
+        if bl[button].scene == 3:
+            buttons_in_scene += 1
+            bl[button].drawButton(surface)
+
+    img_list = []
+    for new_image in range(buttons_in_scene-1):
+        img_list.append(font.render(f'Neurons hidden layer {new_image+1}:', True, BLACK))
+
+    for img in range(len(img_list)):
+        surface.blit(img_list[img], (WIN_WIDTH/10, WIN_HEIGHT/5+button_space_and_height*img + (button_height/2-text_size2/4)))
 
 # cbp = convert button pressed, cdbp = clear display button pressed
 def drawDrawingScreen(surface, f, button_list, consol_m):
@@ -81,7 +98,7 @@ def drawDrawingScreen(surface, f, button_list, consol_m):
     for k in range(len(consol_m)):
         msg = f.render(consol_m[k].message, True, BLACK)
         surface.blit(msg, (WIN_WIDTH - extra_space +
-                           5, WIN_HEIGHT - consol_height + k*text_size2))
+                           WIN_WIDTH/56, WIN_HEIGHT - consol_height + k*text_size2))
 
 
 def drawFigure(surface, lc):
@@ -265,13 +282,13 @@ class Game:
 
         inputs_scene_2 = 0
         active_input_field = ""
-        button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, button_height, font1, 'Detect', 7, 4, 4, True, "button", ""),
-                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, button_height, font1, 'Clear', 11, 4, 4, True, "button", ""),
-                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT - WIN_HEIGHT/3, button_lenght, button_height, font1, 'OK', 17, 4, 1, True, "button", ""),
-                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_str", "name"),
-                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 30, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_float", "learning_rate"),
-                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + 60, input_fiel_lenght, button_height, font1, '', 5, 4, 2, True, "input_hidden_layer", "hidden_layers"),
-                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + 100, button_lenght, button_height, font1, 'OK', 17, 4, 2, False, "button", "")]
+        button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, button_height, font1, 'Detect', WIN_WIDTH/61.7143, button_height/5, 4, True, "button", ""),
+                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, button_height, font1, 'Clear', WIN_WIDTH/39.2727, button_height/5, 4, True, "button", ""),
+                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT - WIN_HEIGHT/3, button_lenght, button_height, font1, 'OK', WIN_WIDTH/25.41176, button_height/5, 1, True, "button", ""),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_str", "name"),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + button_space_and_height, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_float", "learning_rate"),
+                      Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + button_space_and_height*2, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_hidden_layer", "hidden_layers"),
+                      Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + button_space_and_height*3+space_between_buttons, button_lenght, button_height, font1, 'OK', WIN_WIDTH/25.41176, button_height/5, 2, False, "button", "")]
         
         network_name = ""
         learning_rate = 0
@@ -304,9 +321,9 @@ class Game:
                                         if button_list[button].active:
                                             if learning_rate == 0:
                                                 learning_rate = 0.00000000001
-                                            print(network_name)
-                                            print(learning_rate)
-                                            print(hidden_layers)
+                                            for layer in range(hidden_layers):
+                                                button_list.append(Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/5 + button_space_and_height*layer, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 3, True, "input_neurons", f"neurons {layer+1}"),)
+                                            button_list.append(Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/5 + button_space_and_height*(layer+1)+space_between_buttons, button_lenght, button_height, font1, 'OK', WIN_WIDTH/25.41176, button_height/5, 3, False, "button", ""))
                                             select_hidden_layers_scene = False
                                             select_neurons_per_hidden_layer_scene = True
 
@@ -330,23 +347,28 @@ class Game:
                     if event.key == pygame.K_BACKSPACE:
                         active_input_field.name = active_input_field.name[:-1]
                     
-                    elif active_input_field.type == "input_hidden_layer" and active_input_field.name == '':
+                    elif active_input_field.tag == "hidden_layers" and active_input_field.name == '':
                         if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5: 
                             active_input_field.name += event.unicode
                     
-                    elif active_input_field.type != "input_hidden_layer" and len(active_input_field.name) <= 11:
+                    elif active_input_field.type != "input_hidden_layer" and active_input_field.type != "input_neurons" and len(active_input_field.name) <= 11:
                         if active_input_field.type == "input_float":
                             if event.key == pygame.K_0 or event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5 or event.key == pygame.K_6 or event.key == pygame.K_7 or event.key == pygame.K_8 or event.key == pygame.K_9 or event.key == pygame.K_PERIOD: 
                                 active_input_field.name += event.unicode
                         else:
                             active_input_field.name += event.unicode
 
-                    
+                    elif active_input_field.type == "input_neurons"  and len(active_input_field.name) < 3:
+                        if active_input_field.name == '':
+                            if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5 or event.key == pygame.K_6 or event.key == pygame.K_7 or event.key == pygame.K_8 or event.key == pygame.K_9:
+                                active_input_field.name += event.unicode
+                        else:
+                            if event.key == pygame.K_0 or event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5 or event.key == pygame.K_6 or event.key == pygame.K_7 or event.key == pygame.K_8 or event.key == pygame.K_9:
+                                active_input_field.name += event.unicode
                     if active_input_field.name != '':
                         if active_input_field.tag == "name":
                             network_name = active_input_field.name
                         elif active_input_field.tag == "learning_rate":
-
                             learning_rate = float(active_input_field.name)
                         elif active_input_field.tag == "hidden_layers":
                             hidden_layers = int(active_input_field.name)
@@ -404,7 +426,7 @@ class Game:
                 drawHiddenLayerScreen(self.screen, button_list, font2)
 
             elif select_neurons_per_hidden_layer_scene:
-                drawNeuronScreen(self.screen)
+                drawNeuronScreen(self.screen, button_list, font2)
 
             elif drawing_scene:
                 drawDrawingScreen(self.screen, font2,
