@@ -3,6 +3,7 @@ from numpy.core.fromnumeric import transpose
 from numpy.core.function_base import add_newdoc
 from numpy.core.numeric import outer
 import os
+from numpy.lib.function_base import delete
 import pygame
 import time
 from pygame import Surface, draw
@@ -27,8 +28,8 @@ consol_height = WIN_HEIGHT/2
 console_message_max_time = 5
 print(WIN_HEIGHT)
 print(WIN_WIDTH)
-drawing_line_width = 3
-FPS = 1000
+drawing_line_width = image_res_factor
+FPS = 60
 TIME_DELAY = int(1000/FPS)
 
 
@@ -88,8 +89,9 @@ def drawNeuronScene(surface, bl, font):
         surface.blit(img_list[img], (WIN_WIDTH/10, WIN_HEIGHT/5+button_space_and_height*img + (button_height/2-text_size2/4)))
 
 def drawSuccessRateScene(surface, bl, font, precision, name):
-    img = font.render(f'{name} has a success rate of {int(precision)}%', True, BLACK)
-    surface.blit(img, (WIN_WIDTH/3.75, WIN_HEIGHT/4))
+    success_string = f'{name} has a success rate of {int(precision)}%'
+    img = font.render(success_string, True, BLACK)
+    surface.blit(img, (WIN_WIDTH/2  - button_lenght/2*1.5 - button_lenght*1.5 - space_between_buttons, WIN_HEIGHT/4))
 
     for btn in range(len(bl)):
         if bl[btn].scene == 4:
@@ -121,11 +123,14 @@ def drawDrawingScene(surface, f, button_list, consol_m):
 
 
 def drawFigure(surface, lc):
-    for i in range(len(lc) - 1):
-        if lc[i] != "break" and lc[i + 1] != "break":
-            if len(lc[i]) > 1:
-                pygame.draw.line(
-                    surface, BLACK, lc[i], lc[i + 1], drawing_line_width)
+    if len(lc) > 0:
+        for i in range(len(lc) - 1):
+            if lc[i] != "break" and lc[i + 1] != "break":
+                pygame.draw.circle(surface, BLACK, lc[i], drawing_line_width/2)
+                if len(lc[i]) > 1:
+                    pygame.draw.line(
+                        surface, BLACK, lc[i], lc[i + 1], drawing_line_width)
+    
                 
 def getLayerList(neuron_list):
     layer_list = [784]
@@ -322,15 +327,15 @@ class Game:
 
         active_input_field = ""
         button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, button_height, font1, 'Detect', WIN_WIDTH/61.7143, button_height/5, 5, True, "button", ""),
-                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, button_height, font1, 'Clear', WIN_WIDTH/39.2727, button_height/5, 5, True, "button", ""),
+                      Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20 + button_space_and_height, button_lenght, button_height, font1, 'Clear', WIN_WIDTH/39.2727, button_height/5, 5, True, "button", ""),
                       Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT - WIN_HEIGHT/3, button_lenght, button_height, font1, 'OK', WIN_WIDTH/25.41176, button_height/5, 1, True, "button", ""),
                       Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_str", "name"),
                       Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + button_space_and_height, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_float", "learning_rate"),
                       Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + button_space_and_height*2, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_hidden_layer", "hidden_layers"),
                       Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + button_space_and_height*3+space_between_buttons, button_lenght, button_height, font1, 'OK', WIN_WIDTH/25.41176, button_height/5, 2, False, "button", ""),
-                      Button(WIN_WIDTH/2  - button_lenght/2*1.5 - button_lenght*1.5 - space_between_buttons, WIN_HEIGHT/2, button_lenght*1.5, button_height, font1, 'Recreate', WIN_WIDTH/39.2727, button_height/5, 4, True, "button", ""),
-                      Button(WIN_WIDTH/2 - button_lenght/2*1.5, WIN_HEIGHT/2, button_lenght*1.5, button_height, font1, 'Train again', WIN_WIDTH/107.75, button_height/5, 4, True, "button", ""),
-                      Button(WIN_WIDTH/2 + button_lenght/2*1.5 + space_between_buttons, WIN_HEIGHT/2, button_lenght*1.5, button_height, font1, 'Go on', WIN_WIDTH/21.55, button_height/5, 4, True, "button", "")]
+                      Button(WIN_WIDTH/2  - button_lenght/2*1.5 - button_lenght*1.5 - space_between_buttons, WIN_HEIGHT/4 + button_space_and_height + space_between_buttons, button_lenght*1.5, button_height, font1, 'Recreate', WIN_WIDTH/39.2727, button_height/5, 4, True, "button", ""),
+                      Button(WIN_WIDTH/2 - button_lenght/2*1.5, WIN_HEIGHT/4 + button_space_and_height + space_between_buttons, button_lenght*1.5, button_height, font1, 'Train again', WIN_WIDTH/107.75, button_height/5, 4, True, "button", ""),
+                      Button(WIN_WIDTH/2 + button_lenght/2*1.5 + space_between_buttons, WIN_HEIGHT/4 + button_space_and_height + space_between_buttons, button_lenght*1.5, button_height, font1, 'Go on', WIN_WIDTH/21.55, button_height/5, 4, True, "button", "")]
         
         network_name = ""
         learning_rate = 0
@@ -377,6 +382,25 @@ class Game:
                                                 success_rate_list = TrainTestNetwork(mnist_network, self.screen, font1)
                                                 success_rate_scene = success_rate_list[0]
                                                 select_neurons_per_hidden_layer_scene = False
+                                    elif button_list[button].name == 'Recreate':
+                                        if success_rate_scene:
+                                            deleted_buttons = 0
+                                            for i in range(len(button_list)):
+                                                if button_list[i - deleted_buttons].scene == 3:
+                                                    del button_list[i - deleted_buttons]
+                                                    deleted_buttons += 1
+                                            success_rate_scene = False
+                                            select_hidden_layers_scene = True
+                                            break
+                                    elif button_list[button].name == 'Train again':
+                                        if success_rate_scene:
+                                            success_rate_scene = False
+                                            success_rate_list = TrainTestNetwork(mnist_network, self.screen, font1)
+                                            success_rate_scene = success_rate_list[0]
+                                    elif button_list[button].name == 'Go on':
+                                        if success_rate_scene:
+                                            success_rate_scene = False
+                                            drawing_scene = True
                                     else:
                                         active_input_field = button_list[button]
                                     if button_list[button].message != "":
@@ -393,37 +417,38 @@ class Game:
 
                     
                 if event.type == KEYDOWN:
+                    if active_input_field != "":
+                        if active_input_field.type != 'button':
+                            if event.key == pygame.K_BACKSPACE:
+                                active_input_field.name = active_input_field.name[:-1]
+                            
+                            elif active_input_field.tag == "hidden_layers" and active_input_field.name == '':
+                                if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5: 
+                                    active_input_field.name += event.unicode
+                            
+                            elif active_input_field.type != "input_hidden_layer" and active_input_field.type != "input_neurons" and len(active_input_field.name) <= 11:
+                                if active_input_field.type == "input_float":
+                                    if event.key == pygame.K_0 or event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5 or event.key == pygame.K_6 or event.key == pygame.K_7 or event.key == pygame.K_8 or event.key == pygame.K_9 or event.key == pygame.K_PERIOD: 
+                                        active_input_field.name += event.unicode
+                                else:
+                                    active_input_field.name += event.unicode
 
-                    if event.key == pygame.K_BACKSPACE:
-                        active_input_field.name = active_input_field.name[:-1]
-                    
-                    elif active_input_field.tag == "hidden_layers" and active_input_field.name == '':
-                        if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5: 
-                            active_input_field.name += event.unicode
-                    
-                    elif active_input_field.type != "input_hidden_layer" and active_input_field.type != "input_neurons" and len(active_input_field.name) <= 11:
-                        if active_input_field.type == "input_float":
-                            if event.key == pygame.K_0 or event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5 or event.key == pygame.K_6 or event.key == pygame.K_7 or event.key == pygame.K_8 or event.key == pygame.K_9 or event.key == pygame.K_PERIOD: 
-                                active_input_field.name += event.unicode
-                        else:
-                            active_input_field.name += event.unicode
+                            elif active_input_field.type == "input_neurons"  and len(active_input_field.name) < 3:
+                                if active_input_field.name == '':
+                                    if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5 or event.key == pygame.K_6 or event.key == pygame.K_7 or event.key == pygame.K_8 or event.key == pygame.K_9:
+                                        active_input_field.name += event.unicode
+                                else:
+                                    if event.key == pygame.K_0 or event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5 or event.key == pygame.K_6 or event.key == pygame.K_7 or event.key == pygame.K_8 or event.key == pygame.K_9:
+                                        active_input_field.name += event.unicode
+                            if active_input_field.name != '':
+                                if active_input_field.tag == "name":
+                                    network_name = active_input_field.name
+                                elif active_input_field.tag == "learning_rate":
+                                    learning_rate = float(active_input_field.name)
+                                elif active_input_field.tag == "hidden_layers":
+                                    hidden_layers = int(active_input_field.name)
 
-                    elif active_input_field.type == "input_neurons"  and len(active_input_field.name) < 3:
-                        if active_input_field.name == '':
-                            if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5 or event.key == pygame.K_6 or event.key == pygame.K_7 or event.key == pygame.K_8 or event.key == pygame.K_9:
-                                active_input_field.name += event.unicode
-                        else:
-                            if event.key == pygame.K_0 or event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5 or event.key == pygame.K_6 or event.key == pygame.K_7 or event.key == pygame.K_8 or event.key == pygame.K_9:
-                                active_input_field.name += event.unicode
-                    if active_input_field.name != '':
-                        if active_input_field.tag == "name":
-                            network_name = active_input_field.name
-                        elif active_input_field.tag == "learning_rate":
-                            learning_rate = float(active_input_field.name)
-                        elif active_input_field.tag == "hidden_layers":
-                            hidden_layers = int(active_input_field.name)
-
-                    active_input_field.img = font1.render(active_input_field.name, True, BLACK)
+                            active_input_field.img = font1.render(active_input_field.name, True, BLACK)
 
                 #update buttons
                 inputs_scene_2 = 0
