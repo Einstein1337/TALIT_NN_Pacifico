@@ -46,7 +46,7 @@ BLACK = (0, 0, 0)
 BG_COLOR = WHITE
 
 ## FUNCTIONS ##
-def drawIntroducingScreen(surface, bl, font):
+def drawIntroducingScene(surface, bl, font):
     img_list = [font.render('This is a handwriting recognition software. It can detect numbers', True, BLACK),
                 font.render('written by hand between 0 and 9. But first of all, you need to', True, BLACK),
                 font.render('create and train a neuronal network. For that you need to tell', True, BLACK),
@@ -60,7 +60,7 @@ def drawIntroducingScreen(surface, bl, font):
         if bl[button].scene == 1:
             bl[button].drawButton(surface)
 
-def drawHiddenLayerScreen(surface, bl, font):
+def drawHiddenLayerScene(surface, bl, font):
     img_list = [font.render('Name:', True, BLACK),
                 font.render('Learning rate:', True, BLACK),
                 font.render('Hidden layers (max. 5):', True, BLACK),]
@@ -72,7 +72,7 @@ def drawHiddenLayerScreen(surface, bl, font):
             bl[button].drawButton(surface)
 
 
-def drawNeuronScreen(surface, bl, font):
+def drawNeuronScene(surface, bl, font):
     buttons_in_scene = 0
     for button in range(len(bl)):
         if bl[button].scene == 3:
@@ -86,8 +86,10 @@ def drawNeuronScreen(surface, bl, font):
     for img in range(len(img_list)):
         surface.blit(img_list[img], (WIN_WIDTH/10, WIN_HEIGHT/5+button_space_and_height*img + (button_height/2-text_size2/4)))
 
+def drawTrainingScene():
+    pass
 # cbp = convert button pressed, cdbp = clear display button pressed
-def drawDrawingScreen(surface, f, button_list, consol_m):
+def drawDrawingScene(surface, f, button_list, consol_m):
     pygame.draw.line(
         surface, BLACK, (drawing_surface_size, 0), (drawing_surface_size, WIN_HEIGHT), line_width)
 
@@ -107,6 +109,13 @@ def drawFigure(surface, lc):
             if len(lc[i]) > 1:
                 pygame.draw.line(
                     surface, BLACK, lc[i], lc[i + 1], drawing_line_width)
+                
+def getLayerList(neuron_list):
+    layer_list = [784]
+    for l in range(len(neuron_list)):
+        layer_list.append(neuron_list[l])
+    layer_list.append(10)
+    return layer_list
 
 def saveBestWeightsLR(precision, network):
     with open('Best_weights_learning_rate_mnist.txt', 'r') as f:
@@ -270,6 +279,7 @@ class Game:
         introducing_scene = True
         select_hidden_layers_scene = False
         select_neurons_per_hidden_layer_scene = False
+        training_scene = False
         drawing_scene = False
 
         line_coordinates = []
@@ -280,7 +290,6 @@ class Game:
         font2 = pygame.font.SysFont('Arial.ttf', text_size2)
         consol_messages = []
 
-        inputs_scene_2 = 0
         active_input_field = ""
         button_list = [Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 20, button_lenght, button_height, font1, 'Detect', WIN_WIDTH/61.7143, button_height/5, 4, True, "button", ""),
                       Button(WIN_WIDTH - extra_space/2 - button_lenght/2, 40+space_between_buttons, button_lenght, button_height, font1, 'Clear', WIN_WIDTH/39.2727, button_height/5, 4, True, "button", ""),
@@ -293,6 +302,7 @@ class Game:
         network_name = ""
         learning_rate = 0
         hidden_layers = 0
+        neuron_list  = []
         while True:
             # key events
             for event in pygame.event.get():
@@ -308,31 +318,37 @@ class Game:
                             line_coordinates.append((x, y))
                         
                         for button in range(len(button_list)): 
-                            if button_list[button].Pressed():
-                                if button_list[button].name == 'Detect':
-                                    pass
-                                elif button_list[button].name == 'Clear':
-                                    line_coordinates = []
-                                elif button_list[button].name == 'OK':
-                                    if button_list[button].scene == 1:
-                                        introducing_scene = False
-                                        select_hidden_layers_scene = True
-                                    elif button_list[button].scene == 2:
-                                        if button_list[button].active:
-                                            if learning_rate == 0:
-                                                learning_rate = 0.00000000001
-                                            for layer in range(hidden_layers):
-                                                button_list.append(Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/5 + button_space_and_height*layer, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 3, True, "input_neurons", f"neurons {layer+1}"),)
-                                            button_list.append(Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/5 + button_space_and_height*(layer+1)+space_between_buttons, button_lenght, button_height, font1, 'OK', WIN_WIDTH/25.41176, button_height/5, 3, False, "button", ""))
-                                            select_hidden_layers_scene = False
-                                            select_neurons_per_hidden_layer_scene = True
-
-                                else:
-                                    active_input_field = button_list[button]
-                                if button_list[button].message != "":
-                                    if len(consol_messages) >= consol_height/text_size2 - 1:
-                                        consol_messages = []
-                                    consol_messages.append(ConsolMessage(f"{button_list[button].message}", time.time()))
+                            if button_list[button].active:
+                                if button_list[button].Pressed():
+                                    if button_list[button].name == 'Detect':
+                                        pass
+                                    elif button_list[button].name == 'Clear':
+                                        line_coordinates = []
+                                    elif button_list[button].name == 'OK' or button_list[button].name == 'Create / Train':
+                                        if button_list[button].scene == 1:
+                                            if introducing_scene:
+                                                introducing_scene = False
+                                                select_hidden_layers_scene = True
+                                        elif button_list[button].scene == 2:
+                                            if select_hidden_layers_scene:
+                                                if learning_rate == 0:
+                                                    learning_rate = 0.00000000001
+                                                for layer in range(hidden_layers):
+                                                    button_list.append(Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/5 + button_space_and_height*layer, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 3, True, "input_neurons", "neurons"),)
+                                                button_list.append(Button(WIN_WIDTH/2 - button_lenght, WIN_HEIGHT/5 + button_space_and_height*(hidden_layers)+space_between_buttons, button_lenght*2, button_height, font1, 'Create / Train', WIN_WIDTH/50.70588, button_height/5, 3, False, "button", ""))
+                                                select_hidden_layers_scene = False
+                                                select_neurons_per_hidden_layer_scene = True
+                                        elif button_list[button].scene == 3:
+                                            if select_neurons_per_hidden_layer_scene:
+                                                mnist_network = Network(getLayerList(neuron_list), learning_rate, network_name)
+                                                select_neurons_per_hidden_layer_scene = False
+                                                training_scene = True
+                                    else:
+                                        active_input_field = button_list[button]
+                                    if button_list[button].message != "":
+                                        if len(consol_messages) >= consol_height/text_size2 - 1:
+                                            consol_messages = []
+                                        consol_messages.append(ConsolMessage(f"{button_list[button].message}", time.time()))
 
                 if event.type == MOUSEBUTTONUP:
                     for b in range(len(button_list)):
@@ -376,17 +392,29 @@ class Game:
                     active_input_field.img = font1.render(active_input_field.name, True, BLACK)
 
                 #update buttons
+                inputs_scene_2 = 0
+                inputs_scene_3 = 0
+                neuron_list = []
                 for field in range(len(button_list)):
                     if button_list[field].scene == 2:
                         if button_list[field].name != '':
                             inputs_scene_2 += 1
                         if inputs_scene_2 > 3:
                             button_list[field].active = True
-                        else:
-                            if button_list[field].name == 'OK':
-                                button_list[field].active = False
-                inputs_scene_2 = 0
+                        elif button_list[field].name == 'OK':
+                            button_list[field].active = False
+
+                    if button_list[field].scene == 3:
+                        if button_list[field].name != '':
+                            inputs_scene_3 += 1
+                        if inputs_scene_3 > hidden_layers:
+                            button_list[field].active = True
+                        elif button_list[field].name == 'OK':
+                            button_list[field].active = False
                 
+                    if button_list[field].tag == "neurons":
+                        if button_list[field].name != '':
+                            neuron_list.append(int(button_list[field].name))
                         
                 if drawing_scene:
                     if event.type == MOUSEMOTION:
@@ -420,16 +448,19 @@ class Game:
             self.screen.fill(BG_COLOR)  # draw empty screen
             
             if introducing_scene:
-                drawIntroducingScreen(self.screen, button_list, font2)
+                drawIntroducingScene(self.screen, button_list, font2)
 
             elif select_hidden_layers_scene:
-                drawHiddenLayerScreen(self.screen, button_list, font2)
+                drawHiddenLayerScene(self.screen, button_list, font2)
 
             elif select_neurons_per_hidden_layer_scene:
-                drawNeuronScreen(self.screen, button_list, font2)
+                drawNeuronScene(self.screen, button_list, font2)
+            
+            elif training_scene :
+                drawTrainingScene()
 
             elif drawing_scene:
-                drawDrawingScreen(self.screen, font2,
+                drawDrawingScene(self.screen, font2,
                             button_list, consol_messages)
                 drawFigure(self.screen, line_coordinates)
 
@@ -441,7 +472,6 @@ class Game:
             pygame.display.update()
         pygame.quit()
 
-mnist_network = Network([784, 50, 50, 10], 0.02, "MNIST network")
 
 # get inputs and target from csv file
 with open('data\mnist_train.csv', 'r') as ftr:
