@@ -142,37 +142,43 @@ def getLayerList(neuron_list):
     return layer_list
 
 def saveBestWeights(precision, network):
-    with open('Best_precision_number_weights_z_ultimate.txt', 'r') as f:
+    with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/Best_precision_number_weights_z_ultimate.txt', 'r') as f:
         file_line = f.readlines()
     highest_precision = float(file_line[0])
     if precision > highest_precision:
-        with open('Best_precision_number_weights_z_ultimate.txt', 'w') as f:
+        with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/Best_precision_number_weights_z_ultimate.txt', 'w') as f:
             f.write(f"{precision}\n")
-        with open('Best_precision_number_weights_z_ultimate.txt', 'a') as f:
+        with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/Best_precision_number_weights_z_ultimate.txt', 'a') as f:
             f.write(f"{network.neuron_list}\n")
             f.write(f"{network.learning_rate}\n")
             f.write(network.name)
-        with open('Best_weights_z_ultimate.npy', 'wb') as f:
+        with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/Best_weights_z_ultimate.npy', 'wb') as f:
             for weights in range(len(network.W)):
                 np.save(f, network.W[weights])
                 
 def detectNumber(surface, network):
     input_list = []
-    for x in range(image_res):
-        for y in range(image_res):
-            if surface.get_at((x*image_res_factor,y*image_res_factor))[0] == 255:
-                append_pixel = 0
-            else:
-                append_pixel = 1
-            input_list.append(append_pixel)
-    return network.detect(np.array(input_list))
+    for y in range(image_res):
+        for x in range(image_res):
+            middle_pixel_brightness = 0
+            for pixel_y in range(image_res_factor):
+                for pixel_x in range(image_res_factor):
+                    middle_pixel_brightness += surface.get_at((x*image_res_factor + pixel_x,y*image_res_factor+pixel_y))[0]
+            input_list.append(255 - middle_pixel_brightness/np.power(image_res_factor, 2))
+            # color = 255 - middle_pixel_brightness/np.power(image_res_factor, 2)
+            # pygame.draw.rect(surface, (color, color, color),  (x*image_res_factor, y*image_res_factor, image_res_factor, image_res_factor))
+            # pygame.display.flip()
+            # pygame.display.update()
+            # pygame.time.delay(10)
+    print(np.array(input_list))    
+    return network.detect(np.array(input_list)/255)
 
 def TrainTestNetwork(network, surface, font):
     # get inputs and target from csv file
-    with open('data\mnist_train.csv', 'r') as ftr:
+    with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/data/mnist_train.csv', 'r') as ftr:
         input_list_mnist_train = ftr.readlines()
 
-    with open('data\mnist_test.csv', 'r') as fts:
+    with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/data/mnist_test.csv', 'r') as fts:
         input_list_mnist_test = fts.readlines()
     
     network.train(input_list_mnist_train, surface, font)
