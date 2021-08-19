@@ -142,13 +142,13 @@ def getLayerList(neuron_list):
     return layer_list
 
 def saveBestWeights(precision, network):
-    with open('Best_precision_number_weights_z_ultimate.txt', 'r') as f:
+    with open('C:\\Users\\pacif\\OneDrive\\Dokumente\\Kanti\\IT\\TALIT_NN_Pacifico\\Neural_network\\Best_precision_number_weights_z_ultimate.txt', 'r') as f:
         file_line = f.readlines()
     highest_precision = float(file_line[0])
     if precision > highest_precision:
-        with open('Best_precision_number_weights_z_ultimate.txt', 'w') as f:
+        with open('C:\\Users\\pacif\\OneDrive\\Dokumente\\Kanti\\IT\\TALIT_NN_Pacifico\\Neural_network\\Best_precision_number_weights_z_ultimate.txt', 'w') as f:
             f.write(f"{precision}\n")
-        with open('Best_precision_number_weights_z_ultimate.txt', 'a') as f:
+        with open('C:\\Users\\pacif\\OneDrive\\Dokumente\\Kanti\\IT\\TALIT_NN_Pacifico\\Neural_network\\Best_precision_number_weights_z_ultimate.txt', 'a') as f:
             f.write(f"{network.neuron_list}\n")
             f.write(f"{network.learning_rate}\n")
             f.write(network.name)
@@ -158,21 +158,27 @@ def saveBestWeights(precision, network):
                 
 def detectNumber(surface, network):
     input_list = []
-    for x in range(image_res):
-        for y in range(image_res):
-            if surface.get_at((x*image_res_factor,y*image_res_factor))[0] == 255:
-                append_pixel = 0
-            else:
-                append_pixel = 1
-            input_list.append(append_pixel)
+    pixel_brightness_add = 0
+    for y in range(image_res):
+        for x in range(image_res):
+            for pixely in range(image_res_factor):
+                for pixelx in range(image_res_factor):
+                    pixel_brightness_add += 255 - surface.get_at((x*image_res_factor + pixelx, y*image_res_factor + pixely))[0]
+            brighness = pixel_brightness_add/(image_res_factor*image_res_factor)
+            pygame.draw.rect(surface, (brighness, brighness, brighness),  (x * image_res_factor, y * image_res_factor, image_res_factor, image_res_factor))
+            pygame.display.flip()
+            pygame.display.update()
+            input_list.append(brighness)
+            pixel_brightness_add = 0
+    pygame.time.delay(2000)
     return network.detect(np.array(input_list))
 
 def TrainTestNetwork(network, surface, font):
     # get inputs and target from csv file
-    with open('data\mnist_train.csv', 'r') as ftr:
+    with open('C:\\Users\\pacif\\OneDrive\\Dokumente\\Kanti\\IT\\TALIT_NN_Pacifico\\Neural_network\\data\\mnist_train.csv', 'r') as ftr:
         input_list_mnist_train = ftr.readlines()
 
-    with open('data\mnist_test.csv', 'r') as fts:
+    with open('C:\\Users\\pacif\\OneDrive\\Dokumente\\Kanti\\IT\\TALIT_NN_Pacifico\\Neural_network\\data\\mnist_test.csv', 'r') as fts:
         input_list_mnist_test = fts.readlines()
     
     network.train(input_list_mnist_train, surface, font)
@@ -232,7 +238,10 @@ class Network:
             split_input_list = [float(i) for i in split_input_list]
             target_index = int(split_input_list[0])
             target_array = self.getTargetArray(target_index)
-            input_array = np.array(split_input_list[1:len(split_input_list)])/255
+            for number in range(len(split_input_list)-1):
+                if split_input_list[number+1] > 0:
+                    split_input_list[number+1] = 1
+            input_array = np.array(split_input_list[1:len(split_input_list)])
 
             output_array = self.feedforward(input_array)
             self.hidden_layer_arrays.reverse()
@@ -258,8 +267,10 @@ class Network:
             split_input_list = input_list[line].split(",")
             split_input_list = [float(i) for i in split_input_list]
             target = int(split_input_list[0])
-            input_array = np.array(split_input_list[1:len(split_input_list)])/255
-
+            for number in range(len(split_input_list)-1):
+                if split_input_list[number+1] > 0:
+                    split_input_list[number+1] = 1
+            input_array = np.array(split_input_list[1:len(split_input_list)])
             # get index of highest value in output list
             output_list = self.feedforward(input_array).tolist()
             highest_value = max(output_list)
