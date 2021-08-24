@@ -1,15 +1,18 @@
 from sys import float_repr_style
+import sys
 import numpy as np
 from numpy.core.fromnumeric import transpose
 from numpy.core.function_base import add_newdoc
 from numpy.core.numeric import outer
 import os
 from numpy.lib.function_base import delete
+from numpy.lib.type_check import imag
 import pygame
 import time
 from pygame import Surface, draw
 from pygame import surface
 from pygame.constants import KEYDOWN, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION
+import ast
 
 ## VARIABLES ##
 line_width = 2
@@ -28,9 +31,7 @@ button_space_and_height = space_between_buttons + button_height
 
 consol_height = WIN_HEIGHT/2
 console_message_max_time = 5
-print(WIN_HEIGHT)
-print(WIN_WIDTH)
-drawing_line_width = image_res_factor*2
+drawing_line_width = image_res_factor
 FPS = 60
 TIME_DELAY = int(1000/FPS)
 
@@ -142,21 +143,53 @@ def getLayerList(neuron_list):
     return layer_list
 
 def saveBestWeights(precision, network):
-    with open('C:\\Users\\pacif\\OneDrive\\Dokumente\\Kanti\\IT\\TALIT_NN_Pacifico\\Neural_network\\Best_precision_number_weights_z_ultimate.txt', 'r') as f:
+    with open(os.path.join(sys.path[0], "Best_precision_number_weights_z_ultimate.txt"), 'r') as f:
         file_line = f.readlines()
     highest_precision = float(file_line[0])
     if precision > highest_precision:
-        with open('C:\\Users\\pacif\\OneDrive\\Dokumente\\Kanti\\IT\\TALIT_NN_Pacifico\\Neural_network\\Best_precision_number_weights_z_ultimate.txt', 'w') as f:
+        with open(os.path.join(sys.path[0], "Best_precision_number_weights_z_ultimate.txt"), 'w') as f:
             f.write(f"{precision}\n")
-        with open('C:\\Users\\pacif\\OneDrive\\Dokumente\\Kanti\\IT\\TALIT_NN_Pacifico\\Neural_network\\Best_precision_number_weights_z_ultimate.txt', 'a') as f:
+        with open(os.path.join(sys.path[0], "Best_precision_number_weights_z_ultimate.txt"), 'a') as f:
             f.write(f"{network.neuron_list}\n")
             f.write(f"{network.learning_rate}\n")
             f.write(network.name)
-        with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/Best_weights_z_ultimate.npy', 'wb') as f:
+            f.write(len(network.W))
+        with open(os.path.join(sys.path[0], "Best_weights_z_ultimate.npy"), 'wb') as f:
             for weights in range(len(network.W)):
                 np.save(f, network.W[weights])
-                
+
+def CreateBestNetwork():
+    with open(os.path.join(sys.path[0], "Best_precision_number_weights_z_ultimate.txt"), 'r') as nd:
+        network_data = nd.readlines()
+    neuron_list = ast.literal_eval(network_data[1])
+    learning_rate = float(network_data[2])
+    mnist_network = Network(neuron_list, learning_rate, network_data[3]) 
+
+    with open(os.path.join(sys.path[0], "Best_weights_z_ultimate.npy"), 'rb') as f:
+        for weights in range(int(network_data[4])):
+                mnist_network.W.append(np.load(f))
+        
+    print(mnist_network.W)
+
+    return mnist_network
+
 def detectNumber(surface, network):
+    with open(os.path.join(sys.path[0], "data\mnist_test.csv"), 'r') as fts:
+        input_list_mnist_test = fts.readlines()
+
+    # split_input_list = input_list_mnist_test[0].split(",")
+    # split_input_list = [float(i) for i in split_input_list]
+    # v_list = split_input_list[1:len(split_input_list)]
+    
+    # color = 0
+    # for y in range(28):
+    #     for x in range(28):
+    #         pygame.draw.rect(surface, (255 - v_list[color], 255 - v_list[color], 255 - v_list[color]),  (image_res_factor*x, image_res_factor*y, image_res_factor, image_res_factor))
+    #         color += 1
+    #         pygame.time.delay(1)
+    #         pygame.display.flip()
+    #         pygame.display.update()
+
     input_list = []
     for y in range(image_res):
         for x in range(image_res):
@@ -165,20 +198,19 @@ def detectNumber(surface, network):
                 for pixel_x in range(image_res_factor):
                     middle_pixel_brightness += surface.get_at((x*image_res_factor + pixel_x,y*image_res_factor+pixel_y))[0]
             input_list.append(255 - middle_pixel_brightness/np.power(image_res_factor, 2))
-            # color = 255 - middle_pixel_brightness/np.power(image_res_factor, 2)
-            # pygame.draw.rect(surface, (color, color, color),  (x*image_res_factor, y*image_res_factor, image_res_factor, image_res_factor))
-            # pygame.display.flip()
-            # pygame.display.update()
-            # pygame.time.delay(10)
-    print(np.array(input_list))    
+            color = 255 - middle_pixel_brightness/np.power(image_res_factor, 2)
+            pygame.draw.rect(surface, (color, color, color),  (x*image_res_factor, y*image_res_factor, image_res_factor, image_res_factor))
+            pygame.display.flip()
+            pygame.display.update()
+            pygame.time.delay(1) 
     return network.detect(np.array(input_list)/255)
 
 def TrainTestNetwork(network, surface, font):
     # get inputs and target from csv file
-    with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/data/mnist_train.csv', 'r') as ftr:
+    with open(os.path.join(sys.path[0], "data\mnist_train.csv"), 'r') as ftr:
         input_list_mnist_train = ftr.readlines()
 
-    with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/data/mnist_test.csv', 'r') as fts:
+    with open(os.path.join(sys.path[0], "data\mnist_test.csv"), 'r') as fts:
         input_list_mnist_test = fts.readlines()
     
     network.train(input_list_mnist_train, surface, font)
@@ -238,11 +270,8 @@ class Network:
             split_input_list = [float(i) for i in split_input_list]
             target_index = int(split_input_list[0])
             target_array = self.getTargetArray(target_index)
-            for number in range(len(split_input_list)-1):
-                if split_input_list[number+1] > 0:
-                    split_input_list[number+1] = 1
-            input_array = np.array(split_input_list[1:len(split_input_list)])
-
+            input_array = np.array(split_input_list[1:len(split_input_list)])/255
+            
             output_array = self.feedforward(input_array)
             self.hidden_layer_arrays.reverse()
             self.W.reverse()
@@ -368,6 +397,7 @@ class Game:
                       Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + button_space_and_height, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_float", "learning_rate"),
                       Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + button_space_and_height*2, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_hidden_layer", "hidden_layers"),
                       Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + button_space_and_height*3+space_between_buttons, button_lenght, button_height, font1, 'OK', WIN_WIDTH/25.41176, button_height/5, 2, False, "button", ""),
+                      Button(WIN_WIDTH/2 - button_lenght - 10, WIN_HEIGHT/4 + button_space_and_height*4+space_between_buttons, button_lenght*2 + 20, button_height, font1, 'Use best weights', 5, button_height/5, 2, True, "button", ""),
                       Button(WIN_WIDTH/2  - button_lenght/2*1.5 - button_lenght*1.5 - space_between_buttons, WIN_HEIGHT/4 + button_space_and_height + space_between_buttons, button_lenght*1.5, button_height, font1, 'Recreate', WIN_WIDTH/39.2727, button_height/5, 4, True, "button", ""),
                       Button(WIN_WIDTH/2 - button_lenght/2*1.5, WIN_HEIGHT/4 + button_space_and_height + space_between_buttons, button_lenght*1.5, button_height, font1, 'Train again', WIN_WIDTH/107.75, button_height/5, 4, True, "button", ""),
                       Button(WIN_WIDTH/2 + button_lenght/2*1.5 + space_between_buttons, WIN_HEIGHT/4 + button_space_and_height + space_between_buttons, button_lenght*1.5, button_height, font1, 'Go on', WIN_WIDTH/21.55, button_height/5, 4, True, "button", "")]
@@ -398,6 +428,10 @@ class Game:
                                             button_list[button].message = f"Detected {detectNumber(self.screen, mnist_network)}"
                                         elif button_list[button].name == 'Clear':
                                             line_coordinates = []
+                                    elif button_list[button].name == 'Use best weights':
+                                        mnist_network = CreateBestNetwork()
+                                        select_hidden_layers_scene = False
+                                        drawing_scene = True
                                     elif button_list[button].name == 'OK' or button_list[button].name == 'Create / Train':
                                         if button_list[button].scene == 1:
                                             if introducing_scene:
