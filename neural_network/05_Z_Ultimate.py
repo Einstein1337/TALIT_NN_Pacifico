@@ -152,33 +152,33 @@ def saveBestWeights(precision, network):
             f.write(f"{network.neuron_list}\n")
             f.write(f"{network.learning_rate}\n")
             f.write(network.name)
-        with open('Best_weights_z_ultimate.npy', 'wb') as f:
+        with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/Best_weights_z_ultimate.npy', 'wb') as f:
             for weights in range(len(network.W)):
                 np.save(f, network.W[weights])
                 
 def detectNumber(surface, network):
     input_list = []
-    pixel_brightness_add = 0
     for y in range(image_res):
         for x in range(image_res):
-            for pixely in range(image_res_factor):
-                for pixelx in range(image_res_factor):
-                    pixel_brightness_add += 255 - surface.get_at((x*image_res_factor + pixelx, y*image_res_factor + pixely))[0]
-            brighness = pixel_brightness_add/(image_res_factor*image_res_factor)
-            pygame.draw.rect(surface, (brighness, brighness, brighness),  (x * image_res_factor, y * image_res_factor, image_res_factor, image_res_factor))
-            pygame.display.flip()
-            pygame.display.update()
-            input_list.append(brighness)
-            pixel_brightness_add = 0
-    pygame.time.delay(2000)
-    return network.detect(np.array(input_list))
+            middle_pixel_brightness = 0
+            for pixel_y in range(image_res_factor):
+                for pixel_x in range(image_res_factor):
+                    middle_pixel_brightness += surface.get_at((x*image_res_factor + pixel_x,y*image_res_factor+pixel_y))[0]
+            input_list.append(255 - middle_pixel_brightness/np.power(image_res_factor, 2))
+            # color = 255 - middle_pixel_brightness/np.power(image_res_factor, 2)
+            # pygame.draw.rect(surface, (color, color, color),  (x*image_res_factor, y*image_res_factor, image_res_factor, image_res_factor))
+            # pygame.display.flip()
+            # pygame.display.update()
+            # pygame.time.delay(10)
+    print(np.array(input_list))    
+    return network.detect(np.array(input_list)/255)
 
 def TrainTestNetwork(network, surface, font):
     # get inputs and target from csv file
-    with open('C:\\Users\\pacif\\OneDrive\\Dokumente\\Kanti\\IT\\TALIT_NN_Pacifico\\Neural_network\\data\\mnist_train.csv', 'r') as ftr:
+    with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/data/mnist_train.csv', 'r') as ftr:
         input_list_mnist_train = ftr.readlines()
 
-    with open('C:\\Users\\pacif\\OneDrive\\Dokumente\\Kanti\\IT\\TALIT_NN_Pacifico\\Neural_network\\data\\mnist_test.csv', 'r') as fts:
+    with open('/Users/pacif/Documents/VSCode Files/TALIT_NN_Pacifico/Neural_Network/data/mnist_test.csv', 'r') as fts:
         input_list_mnist_test = fts.readlines()
     
     network.train(input_list_mnist_train, surface, font)
