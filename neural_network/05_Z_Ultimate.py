@@ -166,7 +166,7 @@ def CreateBestNetwork():
     learning_rate = float(network_data[2])
     mnist_network = Network(neuron_list, learning_rate, network_data[3]) 
     mnist_network.W = []
-    
+
     with open(os.path.join(sys.path[0], "Best_weights_z_ultimate.npy"), 'rb') as f:
         for weights in range(int(network_data[4])):
                 mnist_network.W.append(np.load(f))
@@ -424,7 +424,7 @@ class Game:
                       Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + button_space_and_height, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_float", "learning_rate"),
                       Button(WIN_WIDTH/2 - input_fiel_lenght/2, WIN_HEIGHT/4 + button_space_and_height*2, input_fiel_lenght, button_height, font1, '', WIN_WIDTH/86.4, button_height/5, 2, True, "input_hidden_layer", "hidden_layers"),
                       Button(WIN_WIDTH/2 - button_lenght/2, WIN_HEIGHT/4 + button_space_and_height*3+space_between_buttons, button_lenght, button_height, font1, 'OK', WIN_WIDTH/25.41176, button_height/5, 2, False, "button", ""),
-                      Button(WIN_WIDTH/2 - button_lenght - 10, WIN_HEIGHT/4 + button_space_and_height*4+space_between_buttons, button_lenght*2 + 20, button_height, font1, 'Use best weights', 5, button_height/5, 2, True, "button", ""),
+                      Button(WIN_WIDTH/2 - button_lenght - 10, WIN_HEIGHT/4 + button_space_and_height*4+space_between_buttons, button_lenght*2 + 20, button_height, font1, 'Use best weights', 5, button_height/5, 2, False, "button", ""),
                       Button(WIN_WIDTH/2  - button_lenght/2*1.5 - button_lenght*1.5 - space_between_buttons, WIN_HEIGHT/4 + button_space_and_height + space_between_buttons, button_lenght*1.5, button_height, font1, 'Recreate', WIN_WIDTH/39.2727, button_height/5, 4, True, "button", ""),
                       Button(WIN_WIDTH/2 - button_lenght/2*1.5, WIN_HEIGHT/4 + button_space_and_height + space_between_buttons, button_lenght*1.5, button_height, font1, 'Train again', WIN_WIDTH/107.75, button_height/5, 4, True, "button", ""),
                       Button(WIN_WIDTH/2 + button_lenght/2*1.5 + space_between_buttons, WIN_HEIGHT/4 + button_space_and_height + space_between_buttons, button_lenght*1.5, button_height, font1, 'Go on', WIN_WIDTH/21.55, button_height/5, 4, True, "button", "")]
@@ -455,10 +455,6 @@ class Game:
                                             button_list[button].message = f"Detected {detectNumber(self.screen, mnist_network)}"
                                         elif button_list[button].name == 'Clear':
                                             line_coordinates = []
-                                    elif button_list[button].name == 'Use best weights':
-                                        mnist_network = CreateBestNetwork()
-                                        select_hidden_layers_scene = False
-                                        drawing_scene = True
                                     elif button_list[button].name == 'OK' or button_list[button].name == 'Create / Train':
                                         if button_list[button].scene == 1:
                                             if introducing_scene:
@@ -479,6 +475,11 @@ class Game:
                                                 success_rate_list = TrainTestNetwork(mnist_network, self.screen, font1)
                                                 success_rate_scene = success_rate_list[0]
                                                 select_neurons_per_hidden_layer_scene = False
+
+                                    elif button_list[button].name == 'Use best weights':
+                                        mnist_network = CreateBestNetwork()
+                                        select_hidden_layers_scene = False
+                                        drawing_scene = True
                                     elif button_list[button].name == 'Recreate':
                                         if success_rate_scene:
                                             deleted_buttons = 0
@@ -607,6 +608,9 @@ class Game:
                 drawIntroducingScene(self.screen, button_list, font2)
 
             elif select_hidden_layers_scene:
+                for btn in range(len(button_list)):
+                    if button_list[btn].name == "Use best weights":
+                        button_list[btn].active = True
                 drawHiddenLayerScene(self.screen, button_list, font2)
 
             elif select_neurons_per_hidden_layer_scene:
