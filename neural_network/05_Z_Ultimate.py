@@ -11,6 +11,7 @@ import pygame
 import time
 from pygame import Surface, draw
 from pygame import surface
+from pygame import font
 from pygame.constants import KEYDOWN, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION
 import ast
 
@@ -31,7 +32,7 @@ button_space_and_height = space_between_buttons + button_height
 
 consol_height = WIN_HEIGHT/2
 console_message_max_time = 5
-drawing_line_width = image_res_factor
+drawing_line_width = int(image_res_factor*2.25)
 FPS = 60
 TIME_DELAY = int(1000/FPS)
 
@@ -153,7 +154,7 @@ def saveBestWeights(precision, network):
             f.write(f"{network.neuron_list}\n")
             f.write(f"{network.learning_rate}\n")
             f.write(network.name)
-            f.write(len(network.W))
+            f.write(f"\n{len(network.W)}")
         with open(os.path.join(sys.path[0], "Best_weights_z_ultimate.npy"), 'wb') as f:
             for weights in range(len(network.W)):
                 np.save(f, network.W[weights])
@@ -164,31 +165,33 @@ def CreateBestNetwork():
     neuron_list = ast.literal_eval(network_data[1])
     learning_rate = float(network_data[2])
     mnist_network = Network(neuron_list, learning_rate, network_data[3]) 
-
+    mnist_network.W = []
+    
     with open(os.path.join(sys.path[0], "Best_weights_z_ultimate.npy"), 'rb') as f:
         for weights in range(int(network_data[4])):
                 mnist_network.W.append(np.load(f))
-        
-    print(mnist_network.W)
-
+    with open(os.path.join(sys.path[0], "data\mnist_test.csv"), 'r') as fts:
+        input_list_mnist_test = fts.readlines()
+    
+    print(mnist_network.Test())
     return mnist_network
 
 def detectNumber(surface, network):
     with open(os.path.join(sys.path[0], "data\mnist_test.csv"), 'r') as fts:
         input_list_mnist_test = fts.readlines()
 
-    # split_input_list = input_list_mnist_test[0].split(",")
-    # split_input_list = [float(i) for i in split_input_list]
-    # v_list = split_input_list[1:len(split_input_list)]
+    split_input_list = input_list_mnist_test[0].split(",")
+    split_input_list = [float(i) for i in split_input_list]
+    v_list = split_input_list[1:len(split_input_list)]
     
-    # color = 0
-    # for y in range(28):
-    #     for x in range(28):
-    #         pygame.draw.rect(surface, (255 - v_list[color], 255 - v_list[color], 255 - v_list[color]),  (image_res_factor*x, image_res_factor*y, image_res_factor, image_res_factor))
-    #         color += 1
-    #         pygame.time.delay(1)
-    #         pygame.display.flip()
-    #         pygame.display.update()
+    color = 0
+    for y in range(28):
+        for x in range(28):
+            pygame.draw.rect(surface, (255 - v_list[color], 255 - v_list[color], 255 - v_list[color]),  (image_res_factor*x, image_res_factor*y, image_res_factor, image_res_factor))
+            color += 1
+            pygame.time.delay(1)
+            pygame.display.flip()
+            pygame.display.update()
 
     input_list = []
     for y in range(image_res):
@@ -203,6 +206,10 @@ def detectNumber(surface, network):
             pygame.display.flip()
             pygame.display.update()
             pygame.time.delay(1) 
+    image = pygame.Surface((image_res*image_res_factor, image_res*image_res_factor)) # Create image surface
+    # Blit portion of the display to the image
+    image.blit(surface, (0, 0), ((0,0), (image_res*image_res_factor,image_res*image_res_factor)))
+    pygame.image.save(image, "image2.jpg")  # Save the image to the dis
     return network.detect(np.array(input_list)/255)
 
 def TrainTestNetwork(network, surface, font):
@@ -309,6 +316,26 @@ class Network:
 
         drawLoadingBar(surface, font, 1, " Testing")
         return right_answers/len(input_list)*100
+
+    def Test(self):
+        with open(os.path.join(sys.path[0], "data\mnist_test.csv"), 'r') as fts:
+            input_list_mnist_test = fts.readlines()
+        right_answers = 0
+        for line in range(len(input_list_mnist_test)):
+            split_input_list = input_list_mnist_test[line].split(",")
+            split_input_list = [float(i) for i in split_input_list]
+            target = int(split_input_list[0])
+            for number in range(len(split_input_list)-1):
+                if split_input_list[number+1] > 0:
+                    split_input_list[number+1] = 1
+            input_array = np.array(split_input_list[1:len(split_input_list)])
+            # get index of highest value in output list
+            output_list = self.feedforward(input_array).tolist()
+            highest_value = max(output_list)
+            highest_value_index = output_list.index(highest_value)
+            if highest_value_index == target:
+                right_answers += 1
+        return right_answers/len(input_list_mnist_test)*100
 
 class ConsolMessage:
     def __init__(self, message, start_time):
