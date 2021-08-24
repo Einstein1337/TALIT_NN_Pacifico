@@ -77,6 +77,13 @@ def drawHiddenLayerScene(surface, bl, font):
         if bl[button].scene == 2:
             bl[button].drawButton(surface)
 
+    with open(os.path.join(sys.path[0], "Best_precision_number_weights_z_ultimate.txt"), 'r') as f:
+        file_line = f.readlines()
+
+
+    txt = font.render(f'Best weights precision: {int(float(file_line[0]))}%', True, BLACK)
+    surface.blit(txt, (WIN_WIDTH/3+image_res_factor/2, WIN_HEIGHT/4+button_space_and_height*5 + (button_height/2-text_size2/4)))
+
 
 def drawNeuronScene(surface, bl, font):
     buttons_in_scene = 0
@@ -170,28 +177,25 @@ def CreateBestNetwork():
     with open(os.path.join(sys.path[0], "Best_weights_z_ultimate.npy"), 'rb') as f:
         for weights in range(int(network_data[4])):
                 mnist_network.W.append(np.load(f))
-    with open(os.path.join(sys.path[0], "data\mnist_test.csv"), 'r') as fts:
-        input_list_mnist_test = fts.readlines()
-    
-    print(mnist_network.Test())
+
     return mnist_network
 
 def detectNumber(surface, network):
     with open(os.path.join(sys.path[0], "data\mnist_test.csv"), 'r') as fts:
         input_list_mnist_test = fts.readlines()
 
-    split_input_list = input_list_mnist_test[0].split(",")
-    split_input_list = [float(i) for i in split_input_list]
-    v_list = split_input_list[1:len(split_input_list)]
+    # split_input_list = input_list_mnist_test[389].split(",")
+    # split_input_list = [float(i) for i in split_input_list]
+    # v_list = split_input_list[1:len(split_input_list)]
     
-    color = 0
-    for y in range(28):
-        for x in range(28):
-            pygame.draw.rect(surface, (255 - v_list[color], 255 - v_list[color], 255 - v_list[color]),  (image_res_factor*x, image_res_factor*y, image_res_factor, image_res_factor))
-            color += 1
-            pygame.time.delay(1)
-            pygame.display.flip()
-            pygame.display.update()
+    # color = 0
+    # for y in range(28):
+    #     for x in range(28):
+    #         pygame.draw.rect(surface, (255 - v_list[color], 255 - v_list[color], 255 - v_list[color]),  (image_res_factor*x, image_res_factor*y, image_res_factor, image_res_factor))
+    #         color += 1
+    #         pygame.time.delay(1)
+    #         pygame.display.flip()
+    #         pygame.display.update()
 
     input_list = []
     for y in range(image_res):
@@ -206,10 +210,11 @@ def detectNumber(surface, network):
             pygame.display.flip()
             pygame.display.update()
             pygame.time.delay(1) 
-    image = pygame.Surface((image_res*image_res_factor, image_res*image_res_factor)) # Create image surface
-    # Blit portion of the display to the image
-    image.blit(surface, (0, 0), ((0,0), (image_res*image_res_factor,image_res*image_res_factor)))
-    pygame.image.save(image, "image2.jpg")  # Save the image to the dis
+
+    # image = pygame.Surface((image_res*image_res_factor, image_res*image_res_factor)) # Create image surface
+    # # Blit portion of the display to the image
+    # image.blit(surface, (0, 0), ((0,0), (image_res*image_res_factor,image_res*image_res_factor)))
+    # pygame.image.save(image, "image.jpg")  # Save the image to the dis
     return network.detect(np.array(input_list)/255)
 
 def TrainTestNetwork(network, surface, font):
@@ -317,26 +322,6 @@ class Network:
         drawLoadingBar(surface, font, 1, " Testing")
         return right_answers/len(input_list)*100
 
-    def Test(self):
-        with open(os.path.join(sys.path[0], "data\mnist_test.csv"), 'r') as fts:
-            input_list_mnist_test = fts.readlines()
-        right_answers = 0
-        for line in range(len(input_list_mnist_test)):
-            split_input_list = input_list_mnist_test[line].split(",")
-            split_input_list = [float(i) for i in split_input_list]
-            target = int(split_input_list[0])
-            for number in range(len(split_input_list)-1):
-                if split_input_list[number+1] > 0:
-                    split_input_list[number+1] = 1
-            input_array = np.array(split_input_list[1:len(split_input_list)])
-            # get index of highest value in output list
-            output_list = self.feedforward(input_array).tolist()
-            highest_value = max(output_list)
-            highest_value_index = output_list.index(highest_value)
-            if highest_value_index == target:
-                right_answers += 1
-        return right_answers/len(input_list_mnist_test)*100
-
 class ConsolMessage:
     def __init__(self, message, start_time):
         self.message = message
@@ -408,6 +393,7 @@ class Game:
         success_rate_scene = False
         drawing_scene = False
 
+        able_to_draw = False
         line_coordinates = []
         mouse_pressed = False
         detect_button_pressed = False
@@ -452,7 +438,7 @@ class Game:
                                 if button_list[button].Pressed():
                                     if drawing_scene:
                                         if button_list[button].name == 'Detect':  
-                                            button_list[button].message = f"Detected {detectNumber(self.screen, mnist_network)}"
+                                            button_list[button].message = f"{mnist_network.name} detected {detectNumber(self.screen, mnist_network)}"
                                         elif button_list[button].name == 'Clear':
                                             line_coordinates = []
                                     elif button_list[button].name == 'OK' or button_list[button].name == 'Create / Train':
@@ -622,7 +608,9 @@ class Game:
             elif drawing_scene:
                 drawDrawingScene(self.screen, font2,
                             button_list, consol_messages)
-                drawFigure(self.screen, line_coordinates)
+                if able_to_draw:
+                    drawFigure(self.screen, line_coordinates)
+                able_to_draw = True
 
             
 
