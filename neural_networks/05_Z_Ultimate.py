@@ -545,13 +545,14 @@ class Game:
                             neuron_list.append(int(button_list[field].name))
                         
                 if drawing_scene:
-                    if event.type == MOUSEMOTION:
-                        if mouse_pressed:
-                            (x, y) = pygame.mouse.get_pos()
-                            if x < WIN_WIDTH - extra_space - drawing_line_width/2 and x > 0 and y > 0 and y < WIN_HEIGHT:
-                                line_coordinates.append((x, y))
-                            else:
-                                line_coordinates.append("break")
+                    if able_to_draw:
+                        if event.type == MOUSEMOTION:
+                            if mouse_pressed:
+                                (x, y) = pygame.mouse.get_pos()
+                                if x < WIN_WIDTH - extra_space - drawing_line_width/2 and x > 0 and y > 0 and y < WIN_HEIGHT:
+                                    line_coordinates.append((x, y))
+                                else:
+                                    line_coordinates.append("break")
 
             keys = pygame.key.get_pressed()
             if keys[pygame.K_ESCAPE]:
