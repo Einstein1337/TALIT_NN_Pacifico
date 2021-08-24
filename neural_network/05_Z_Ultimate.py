@@ -481,6 +481,8 @@ class Game:
                     mouse_pressed = False
                     if len(line_coordinates) > 0:
                         line_coordinates.append("break")
+                    if drawing_scene:
+                        able_to_draw = True
 
                     
                 if event.type == KEYDOWN:
@@ -593,7 +595,6 @@ class Game:
                             button_list, consol_messages)
                 if able_to_draw:
                     drawFigure(self.screen, line_coordinates)
-                able_to_draw = True
 
             
 
