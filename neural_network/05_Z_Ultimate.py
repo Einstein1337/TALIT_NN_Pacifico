@@ -160,8 +160,8 @@ def saveBestWeights(precision, network):
         with open(os.path.join(sys.path[0], "Best_precision_number_weights_z_ultimate.txt"), 'a') as f:
             f.write(f"{network.neuron_list}\n")
             f.write(f"{network.learning_rate}\n")
+            f.write(f"{len(network.W)}\n")
             f.write(network.name)
-            f.write(f"\n{len(network.W)}")
         with open(os.path.join(sys.path[0], "Best_weights_z_ultimate.npy"), 'wb') as f:
             for weights in range(len(network.W)):
                 np.save(f, network.W[weights])
@@ -171,31 +171,19 @@ def CreateBestNetwork():
         network_data = nd.readlines()
     neuron_list = ast.literal_eval(network_data[1])
     learning_rate = float(network_data[2])
-    mnist_network = Network(neuron_list, learning_rate, network_data[3]) 
+    mnist_network = Network(neuron_list, learning_rate, network_data[4]) 
     mnist_network.W = []
 
     with open(os.path.join(sys.path[0], "Best_weights_z_ultimate.npy"), 'rb') as f:
-        for weights in range(int(network_data[4])):
+        for weights in range(int(network_data[3])):
                 mnist_network.W.append(np.load(f))
 
     return mnist_network
 
 def detectNumber(surface, network):
+
     with open(os.path.join(sys.path[0], "data\mnist_test.csv"), 'r') as fts:
         input_list_mnist_test = fts.readlines()
-
-    # split_input_list = input_list_mnist_test[389].split(",")
-    # split_input_list = [float(i) for i in split_input_list]
-    # v_list = split_input_list[1:len(split_input_list)]
-    
-    # color = 0
-    # for y in range(28):
-    #     for x in range(28):
-    #         pygame.draw.rect(surface, (255 - v_list[color], 255 - v_list[color], 255 - v_list[color]),  (image_res_factor*x, image_res_factor*y, image_res_factor, image_res_factor))
-    #         color += 1
-    #         pygame.time.delay(1)
-    #         pygame.display.flip()
-    #         pygame.display.update()
 
     input_list = []
     for y in range(image_res):
@@ -210,11 +198,6 @@ def detectNumber(surface, network):
             pygame.display.flip()
             pygame.display.update()
             pygame.time.delay(1) 
-
-    # image = pygame.Surface((image_res*image_res_factor, image_res*image_res_factor)) # Create image surface
-    # # Blit portion of the display to the image
-    # image.blit(surface, (0, 0), ((0,0), (image_res*image_res_factor,image_res*image_res_factor)))
-    # pygame.image.save(image, "image.jpg")  # Save the image to the dis
     return network.detect(np.array(input_list)/255)
 
 def TrainTestNetwork(network, surface, font):
@@ -381,7 +364,7 @@ class Game:
             (WIN_WIDTH, WIN_HEIGHT)
         )  # create screen which will display everything
         self.win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
-        pygame.display.set_caption("Paint from wish")  # Game title
+        pygame.display.set_caption("Wär das liest, isch blöd !")  # Game title
         self.game_play = False
         self.living_cells = []
 
