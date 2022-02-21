@@ -125,7 +125,7 @@ def drawDrawingScene(surface, f, button_list, consol_m):
     for btn in range(len(button_list)):
         if button_list[btn].scene == 5:
             button_list[btn].drawButton(surface)
-
+    
     #text in consol
     for k in range(len(consol_m)):
         msg = f.render(consol_m[k].message, True, BLACK)
@@ -177,7 +177,6 @@ def CreateBestNetwork():
     with open(os.path.join(sys.path[0], "Best_weights_z_ultimate.npy"), 'rb') as f:
         for weights in range(int(network_data[3])):
                 mnist_network.W.append(np.load(f))
-
     return mnist_network
 
 def detectNumber(surface, network):
@@ -197,7 +196,7 @@ def detectNumber(surface, network):
             pygame.draw.rect(surface, (color, color, color),  (x*image_res_factor, y*image_res_factor, image_res_factor, image_res_factor))
             pygame.display.flip()
             pygame.display.update()
-            pygame.time.delay(1) 
+            pygame.time.delay(1)
     return network.detect(np.array(input_list)/255)
 
 def TrainTestNetwork(network, surface, font):
@@ -364,7 +363,7 @@ class Game:
             (WIN_WIDTH, WIN_HEIGHT)
         )  # create screen which will display everything
         self.win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
-        pygame.display.set_caption("Wär das liest, isch blöd !")  # Game title
+        pygame.display.set_caption("Handschrifterkennungsprogramm")  # Game title
         self.game_play = False
         self.living_cells = []
 
