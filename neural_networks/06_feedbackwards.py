@@ -5,30 +5,17 @@ import os
 import sys
 
 
-def saveBestWeightsLR(precision, network, nn_name):
-    if nn_name == "t":
-        with open(os.path.join(sys.path[0], 'Best_weights_learning_rate_tp.txt'), 'r') as f:
-            file_lines = f.readlines()
-        highest_percentage = float(file_lines[0])
-        if precision > highest_percentage:
-            f = open(os.path.join(sys.path[0], 'Best_weights_learning_rate_tp.txt'), 'w')
-            f.write(f"{precision}\n")
-            f.close()
-            f = open(os.path.join(sys.path[0], 'Best_weights_learning_rate_tp.txt'), 'a')
-            f.write(f"{network.learning_rate}\n")
-            f.write(f"{network.W}")
-
-    elif nn_name == "m":
-        with open(os.path.join(sys.path[0], 'Best_weights_learning_rate_mnist.txt'), 'r') as f:
-            file_lines = f.readlines()
-        highest_percentage = float(file_lines[0])
-        if precision > highest_percentage:
-            f = open(os.path.join(sys.path[0], 'Best_weights_learning_rate_mnist.txt'), 'w')
-            f.write(f"{precision}\n")
-            f.close()
-            f = open(os.path.join(sys.path[0], 'Best_weights_learning_rate_mnist.txt'), 'a')
-            f.write(f"{network.learning_rate}\n")
-            f.write(f"{network.W}")
+def saveBestWeightsLR(precision, network):
+    with open(os.path.join(sys.path[0], 'Best_weights_learning_rate_mnist.txt'), 'r') as f:
+        file_lines = f.readlines()
+    highest_percentage = float(file_lines[0])
+    if precision > highest_percentage:
+        f = open(os.path.join(sys.path[0], 'Best_weights_learning_rate_mnist.txt'), 'w')
+        f.write(f"{precision}\n")
+        f.close()
+        f = open(os.path.join(sys.path[0], 'Best_weights_learning_rate_mnist.txt'), 'a')
+        f.write(f"{network.learning_rate}\n")
+        f.write(f"{network.W}")
 
         
 
@@ -49,13 +36,16 @@ class Network:
         return 1/(1+np.exp(-z))
 
 
-    def feedforward(self, input_array):
+    def feedForward(self, input_array):
         next_hidden_layer_array = input_array
         self.hidden_layer_arrays.append(next_hidden_layer_array)
         for hidden_layer in range(len(self.neuron_list)-1):
             next_hidden_layer_array = self.sigmoid(np.dot(self.W[hidden_layer], next_hidden_layer_array))
             self.hidden_layer_arrays.append(next_hidden_layer_array)
         return next_hidden_layer_array  # last hidden layer array = output array
+       
+    def feedBackwards(self, input_vector):
+        pass
     
     def getTargetArray(self, index):
         target_array = np.zeros(self.output_neurons,)
@@ -78,7 +68,7 @@ class Network:
             target_array = self.getTargetArray(target_index)
             input_array = np.array(split_input_list[1:len(split_input_list)])/255
 
-            output_array = self.feedforward(input_array)
+            output_array = self.feedForward(input_array)
             self.hidden_layer_arrays.reverse()
             self.W.reverse()
             E_out = target_array - output_array
@@ -105,7 +95,7 @@ class Network:
             input_array = np.array(split_input_list[1:len(split_input_list)])/255
 
             # get index of highest value in output list
-            output_list = self.feedforward(input_array).tolist()
+            output_list = self.feedForward(input_array).tolist()
             highest_value = max(output_list)
             highest_value_index = output_list.index(highest_value)
             if highest_value_index == target:
@@ -116,16 +106,9 @@ class Network:
 
 
 learning_rate = 0.02
-toy_problem_network = Network([4, 3, 2], learning_rate, "toy problem network")
 mnist_network = Network([784, 50, 50, 10], 0.01, "MNIST network")
 
 # get inputs and target from csv file
-with open(os.path.join(sys.path[0], 'data\data_dark_bright_training_20000.csv'), 'r') as f1tr:
-    input_list_toy_problem_train = f1tr.readlines()
-
-with open(os.path.join(sys.path[0], 'data\data_dark_bright_test_4000.csv'), 'r') as f1ts:
-    input_list_toy_problem_test = f1ts.readlines()
-
 with open(os.path.join(sys.path[0], 'data\mnist_train.csv'), 'r') as f2tr:
     input_list_mnist_train = f2tr.readlines()
 
@@ -134,18 +117,13 @@ with open(os.path.join(sys.path[0], 'data\mnist_test.csv'), 'r') as f2ts:
 
 
 for i in range(1):  
-    #toy_problem_network.__init__([4, 3, 2], learning_rate, "toy problem network")
     mnist_network.__init__([784, 50, 50, 10], 0.0121, "MNIST network")
-    #toy_problem_network.train(input_list_toy_problem_train)
     mnist_network.train(input_list_mnist_train)
 
-    #precision_toy_problem = toy_problem_network.test(input_list_toy_problem_test)
     precision_mnist = mnist_network.test(input_list_mnist_test)
 
 
-    #saveBestWeightsLR(precision_toy_problem, toy_problem_network, "t")
-    saveBestWeightsLR(precision_mnist, mnist_network, "m")
+    saveBestWeightsLR(precision_mnist, mnist_network)
 
-    #print(f"Toy problem network precision: {precision_toy_problem}%")
     print(f"MNIST network precision: {precision_mnist}%")
 print("Done")
