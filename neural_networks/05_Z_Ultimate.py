@@ -212,6 +212,7 @@ def TrainTestNetwork(network, surface, font):
     saveBestWeights(precision, network)
     return [True, precision]
 
+
 class Network:
     def __init__(self, neuron_list, learning_rate, name):
         self.name = name

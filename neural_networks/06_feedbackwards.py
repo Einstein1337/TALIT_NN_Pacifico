@@ -35,7 +35,6 @@ class Network:
     def sigmoid(self, z):
         return 1/(1+np.exp(-z))
 
-
     def feedForward(self, input_array):
         next_hidden_layer_array = input_array
         self.hidden_layer_arrays.append(next_hidden_layer_array)
