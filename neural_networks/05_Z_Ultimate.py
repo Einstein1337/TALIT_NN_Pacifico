@@ -181,7 +181,7 @@ def CreateBestNetwork():
 
 def detectNumber(surface, network):
 
-    with open(os.path.join(sys.path[0], "data\mnist_test.csv"), 'r') as fts:
+    with open(os.path.join(sys.path[0], "data/mnist_test.csv"), 'r') as fts:
         input_list_mnist_test = fts.readlines()
 
     input_list = []
@@ -201,10 +201,10 @@ def detectNumber(surface, network):
 
 def TrainTestNetwork(network, surface, font):
     # get inputs and target from csv file
-    with open(os.path.join(sys.path[0], "data\mnist_train.csv"), 'r') as ftr:
+    with open(os.path.join(sys.path[0], "data/mnist_train.csv"), 'r') as ftr:
         input_list_mnist_train = ftr.readlines()
 
-    with open(os.path.join(sys.path[0], "data\mnist_test.csv"), 'r') as fts:
+    with open(os.path.join(sys.path[0], "data/mnist_test.csv"), 'r') as fts:
         input_list_mnist_test = fts.readlines()
     
     network.train(input_list_mnist_train, surface, font)
